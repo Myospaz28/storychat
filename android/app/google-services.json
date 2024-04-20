@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "317807397984",
+    "project_id": "fiber-chat-76342",
+    "storage_bucket": "fiber-chat-76342.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317807397984:android:d82e1d8deae2e10f3b4705",
+        "android_client_info": {
+          "package_name": "com.storychat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBK9HRJM5reaYhlhJ7CJ5ABz-5jfC7Zrfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
