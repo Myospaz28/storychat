@@ -1249,6 +1249,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                             builder: (context) => RecentChats(
                                                               prefs: widget.prefs,
                                                               currentUserNo: widget.currentUserNo,
+                                                              doc: widget.doc,
                                                               isSecuritySetupDone: true,
                                                             ),
                                                           ),
@@ -1670,7 +1671,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                               ]
                                             : <Widget>[]) +
                                         <Widget>[
-                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false),
+                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false, doc: widget.doc),
                                           Status(currentUserFullname: userFullname, currentUserPhotourl: userPhotourl, phoneNumberVariants: this.phoneNumberVariants, currentUserNo: widget.currentUserNo, model: _cachedModel, biometricEnabled: biometricEnabled, prefs: widget.prefs),
                                           CallHistory(
                                             model: _cachedModel,
@@ -1684,7 +1685,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                               ]
                                             : <Widget>[]) +
                                         <Widget>[
-                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false),
+                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false, doc: widget.doc),
                                           Status(currentUserFullname: userFullname, currentUserPhotourl: userPhotourl, phoneNumberVariants: this.phoneNumberVariants, currentUserNo: widget.currentUserNo, model: _cachedModel, biometricEnabled: biometricEnabled, prefs: widget.prefs),
                                         ],
                               )),

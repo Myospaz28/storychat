@@ -44,9 +44,16 @@ Color darkGrey = Colors.blueGrey[700]!;
 Color lightGrey = Colors.blueGrey[400]!;
 
 class RecentChats extends StatefulWidget {
-  RecentChats({required this.currentUserNo, required this.isSecuritySetupDone, required this.prefs, key}) : super(key: key);
+  RecentChats({
+    required this.currentUserNo,
+    required this.isSecuritySetupDone,
+    required this.prefs,
+    required this.doc,
+    key,
+  }) : super(key: key);
   final String? currentUserNo;
   final SharedPreferences prefs;
+  final DocumentSnapshot<Map<String, dynamic>> doc;
   final bool isSecuritySetupDone;
 
   @override
@@ -319,6 +326,7 @@ class RecentChatsState extends State<RecentChats> {
                                       padding: EdgeInsets.all(5),
                                     ),
                                   if (_streamDocSnap[index].containsKey(Dbkeys.groupISTYPINGUSERID))
+
                                     ///----- Build Group Chat Tile ----
                                     streamLoadCollections(
                                       stream: FirebaseFirestore.instance
@@ -512,7 +520,18 @@ class RecentChatsState extends State<RecentChats> {
                                     ),
                                     color: Colors.transparent,
                                     child: InkWell(
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          new MaterialPageRoute(
+                                            builder: (context) => Homepage(
+                                              prefs: widget.prefs,
+                                              currentUserNo: currentUserNo,
+                                              doc: widget.doc,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                       borderRadius: BorderRadius.circular(96),
                                       child: Padding(
                                         padding: EdgeInsets.all(4),
@@ -541,6 +560,7 @@ class RecentChatsState extends State<RecentChats> {
                                             builder: (context) => Profile(
                                               prefs: widget.prefs,
                                               currentUserNo: currentUserNo,
+                                              doc: widget.doc,
                                               isSecuritySetupDone: widget.isSecuritySetupDone,
                                             ),
                                           ),
@@ -621,12 +641,14 @@ class RecentChatsState extends State<RecentChats> {
 class Profile extends StatefulWidget {
   final SharedPreferences prefs;
   final String? currentUserNo;
+  final DocumentSnapshot<Map<String, dynamic>> doc;
   final bool isSecuritySetupDone;
 
   const Profile({
     super.key,
     required this.prefs,
     this.currentUserNo,
+    required this.doc,
     required this.isSecuritySetupDone,
   });
 
@@ -906,6 +928,7 @@ class _ProfileState extends State<Profile> {
                                             prefs: widget.prefs,
                                             currentUserNo: widget.currentUserNo,
                                             isSecuritySetupDone: true,
+                                            doc: widget.doc,
                                           ),
                                         ),
                                       );
