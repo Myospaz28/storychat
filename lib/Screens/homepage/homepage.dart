@@ -1153,9 +1153,39 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                             Expanded(
                                               child: Row(
                                                 children: [
-                                                  Icon(
-                                                    Icons.explore_rounded,
-                                                    size: 48,
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      widget.prefs.setBool("chat_enabled", false);
+                                                      var _userData = _cachedModel!.userData;
+                                                      Map.from(_userData)
+                                                          .values
+                                                          .where((_user) {
+                                                            return _user.keys.contains(Dbkeys.chatStatus);
+                                                          })
+                                                          .cast<Map<String, dynamic>>()
+                                                          .forEach((targetUser) async {
+                                                            String chatId = Fiberchat.getChatId(widget.currentUserNo!, targetUser[Dbkeys.phone]);
+
+                                                            if (targetUser[Dbkeys.phone] != null) {
+                                                              await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).delete().then((v) async {
+                                                                await FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserNo!).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).set({
+                                                                  targetUser[Dbkeys.phone]: FieldValue.delete(),
+                                                                }, SetOptions(merge: true));
+
+                                                                await FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(targetUser[Dbkeys.phone]).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).set({
+                                                                  widget.currentUserNo!: FieldValue.delete(),
+                                                                }, SetOptions(merge: true));
+                                                              }).then((value) {});
+                                                            } else {
+                                                              Fiberchat.toast('Error Occured. Could not delete !');
+                                                            }
+                                                          });
+                                                      setState(() {});
+                                                    },
+                                                    child: Icon(
+                                                      Icons.explore_rounded,
+                                                      size: 48,
+                                                    ),
                                                   ),
                                                   SizedBox(
                                                     width: 8,

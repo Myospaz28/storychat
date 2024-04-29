@@ -416,43 +416,45 @@ Widget getPersonalMessageTile({
                                     SetOptions(merge: true),
                                   );
                                 },
-                                child: snapshot.data == true
-                                    ? Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: newPrimaryColor,
-                                      borderRadius: BorderRadius.circular(96),
-                                    ),
-                                    width: 16,
-                                    child: Padding(
+                                child: snapshot.data == false
+                                    ? Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(96),
+                                  ),
+                                  width: double.infinity,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Container(
+                                      width: 16,
                                       padding: const EdgeInsets.all(2),
                                       child: Icon(
                                         Icons.arrow_forward_ios_outlined,
                                         size: 12,
-                                        color: Colors.white,
+                                        color: newPrimaryColor,
                                       ),
                                     ),
                                   ),
                                 )
-                                    : Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: newPrimaryColor,
-                                      borderRadius: BorderRadius.circular(96),
+                                    : Container(
+                                      decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(96),
                                     ),
-                                    width: 16,
-                                    child: Padding(
+                                      width: double.infinity,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                      width: 16,
                                       padding: const EdgeInsets.all(2),
                                       child: Icon(
                                         Icons.arrow_back_ios_outlined,
                                         size: 12,
-                                        color: Colors.white,
+                                        color: newPrimaryColor,
                                       ),
                                     ),
-                                  ),
-                                ),
+                                      ),
+                                    ),
                               );
                             }
                             return SizedBox();
