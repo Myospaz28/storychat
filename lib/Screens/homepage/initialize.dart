@@ -658,8 +658,15 @@ class _InitializeState extends State<Initialize> {
               ),
             ),
           )
-        : isprocessing == true
-            ? Splashscreen()
+        : iscircleprogressindicator == true
+        ? Scaffold(
+      backgroundColor: mycolor,
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    ) : isprocessing == true
+            ? Splashscreen(
+    )
             : isready == false
                 ? iscircleprogressindicator == true
                     ? Scaffold(
@@ -1006,8 +1013,7 @@ class _InitializeState extends State<Initialize> {
                           ),
                         ),
                       )
-                : Homepage(
-                    doc: doc!, currentUserNo: widget.id, prefs: widget.prefs);
+                : Homepage(doc: doc!, currentUserNo: widget.id, prefs: widget.prefs);
   }
 
   String reverse(String string) {

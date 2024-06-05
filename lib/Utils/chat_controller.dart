@@ -145,7 +145,7 @@ class ChatController {
               answer: user[Dbkeys.answer],
               passcode: user[Dbkeys.passcode],
               question: user[Dbkeys.question],
-              phoneNo: user[Dbkeys.phone],
+              phoneNo: user[Dbkeys.username],
               prefs: prefs,
               onSuccess: onSuccess)));
     }

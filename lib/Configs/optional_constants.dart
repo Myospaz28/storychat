@@ -23,7 +23,7 @@ int maxChatMessageDocsLoadAtOnceForGroupChatAndBroadcastLazyLoading = 25;
 int maxAdFailedLoadAttempts = 3;
 //Minimum Value should be 3.
 
-const int timeOutSeconds = 50;
+const int timeOutSeconds = 30;
 // Default phone Auth Code auto retrival timeout
 
 const IsShowNativeTimDate = true;

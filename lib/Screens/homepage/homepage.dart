@@ -577,7 +577,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
   }
 
   getSignedInUserOrRedirect() async {
-    try {
+    // try {
       setState(() {
         isblockNewlogins = widget.doc.data()![Dbkeys.isblocknewlogins];
         isApprovalNeededbyAdminForNewUser = widget.doc[Dbkeys.isaccountapprovalbyadminneeded];
@@ -751,7 +751,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                     getuid(context);
                     setIsActive();
 
-                    incrementSessionCount(userDoc[Dbkeys.phone]);
+                    incrementSessionCount(userDoc[Dbkeys.username]);
                   }
                 }
               });
@@ -759,9 +759,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
           }
         }
       }
-    } catch (e) {
-      showERRORSheet(this.context, "", message: e.toString());
-    }
+    // } catch (e) {
+    //   showERRORSheet(this.context, "", message: e.toString());
+    // }
   }
 
   StreamController<String> _userQuery = new StreamController<String>.broadcast();
@@ -808,6 +808,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                 : ConnectWithAdminApp == true && isFetching == true
                     ? Splashscreen(
                         isShowOnlySpinner: widget.isShowOnlyCircularSpin,
+                        doc: widget.doc
                       )
                     : PickupLayout(
                         prefs: widget.prefs,
@@ -820,14 +821,14 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                 if (snapshot.hasData && snapshot.data?.exists == true) {
                                   var myDoc = snapshot.data;
                                   return Scaffold(
-                                    backgroundColor: Color.fromRGBO(37, 37, 37, 1),
+                                    backgroundColor: Colors.white,
                                     body: SafeArea(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            children: [
-                                              Row(
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(12),
+                                              child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   Row(
@@ -842,44 +843,24 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                       ),
                                                       Text(
                                                         'Story Chat',
-                                                        style: TextStyle(color: Colors.white, fontSize: 18),
+                                                        style: TextStyle(
+                                                          color: Color.fromRGBO(193, 59, 52, 1),
+                                                          fontSize: 18,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontStyle: FontStyle.italic,
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
                                                   InkWell(
-                                                    onTap: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        new MaterialPageRoute(
-                                                          builder: (context) => SettingsOption(
-                                                            prefs: widget.prefs,
-                                                            onTapLogout: () async {
-                                                              await logout(context);
-                                                            },
-                                                            onTapEditProfile: () {
-                                                              Navigator.push(
-                                                                context,
-                                                                new MaterialPageRoute(
-                                                                  builder: (context) => ProfileSetting(
-                                                                    prefs: widget.prefs,
-                                                                    biometricEnabled: biometricEnabled,
-                                                                    type: Fiberchat.getAuthenticationType(biometricEnabled, _cachedModel),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            },
-                                                            currentUserNo: widget.currentUserNo!,
-                                                            biometricEnabled: biometricEnabled,
-                                                            type: Fiberchat.getAuthenticationType(biometricEnabled, _cachedModel),
-                                                          ),
-                                                        ),
-                                                      );
+                                                    onTap: () async {
+                                                      await logout(context);
                                                     },
                                                     borderRadius: BorderRadius.circular(20),
                                                     child: Padding(
                                                       padding: const EdgeInsets.all(4),
                                                       child: Icon(
-                                                        Icons.settings,
+                                                        Icons.power_settings_new,
                                                         size: 24,
                                                         color: newPrimaryColor,
                                                       ),
@@ -887,27 +868,32 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              Row(
+                                            ),
+                                            SizedBox(
+                                              height: 20,
+                                            ),
+                                            Container(
+                                              color: Color.fromRGBO(232, 232, 249, 1),
+                                              padding: const EdgeInsets.all(12),
+                                              child: Row(
                                                 children: [
+                                                  customCircleAvatar(
+                                                    radius: 30,
+                                                    url: myDoc![Dbkeys.photoUrl],
+                                                  ),
+                                                  SizedBox(
+                                                    width: 10,
+                                                  ),
                                                   Expanded(
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
                                                         Text(
-                                                          "Welcome back,",
+                                                          myDoc[Dbkeys.nickname],
                                                           style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
-                                                        Text(
-                                                          myDoc![Dbkeys.nickname],
-                                                          style: TextStyle(
-                                                            color: Colors.white,
+                                                            color: Color.fromRGBO(251, 127, 121, 1),
                                                             fontSize: 20,
+                                                            fontWeight: FontWeight.bold,
                                                           ),
                                                         ),
                                                         SizedBox(
@@ -922,7 +908,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                                 Icon(
                                                                   Icons.circle,
                                                                   size: 12,
-                                                                  color: Colors.white,
+                                                                  color: Colors.black,
                                                                 ),
                                                                 SizedBox(
                                                                   width: 8,
@@ -930,7 +916,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                                 Text(
                                                                   "Since ${since.year}",
                                                                   style: TextStyle(
-                                                                    color: Colors.white,
+                                                                    color: Colors.black,
                                                                     fontSize: 14,
                                                                   ),
                                                                 ),
@@ -943,82 +929,12 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                       ],
                                                     ),
                                                   ),
-                                                  customCircleAvatar(
-                                                    radius: 40,
-                                                    url: myDoc[Dbkeys.photoUrl],
-                                                  ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  color: newPrimaryColor,
-                                                  borderRadius: BorderRadius.circular(24),
-                                                ),
-                                                padding: EdgeInsets.all(20),
-                                                child: Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            "Latest Playlist",
-                                                            style: TextStyle(
-                                                              color: Colors.white,
-                                                              fontSize: 16,
-                                                            ),
-                                                          ),
-                                                          SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Container(
-                                                            decoration: BoxDecoration(
-                                                              color: Color.fromRGBO(37, 37, 37, 1),
-                                                              borderRadius: BorderRadius.circular(16),
-                                                            ),
-                                                            height: 3,
-                                                            width: 24,
-                                                          ),
-                                                          SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Text(
-                                                            "Enjoy trending and latest Playlist",
-                                                            style: TextStyle(
-                                                              color: Colors.white,
-                                                              fontSize: 12,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    FutureBuilder(
-                                                      future: () async {
-                                                        return FirebaseStorage.instance.ref("Playlists/Latest Playlist.webp").getDownloadURL();
-                                                      }(),
-                                                      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                                                        if (snapshot.hasData) {
-                                                          return Image.network(
-                                                            snapshot.data ?? "",
-                                                            height: 64,
-                                                            width: 64,
-                                                            fit: BoxFit.cover,
-                                                          );
-                                                        } else {
-                                                          return Container();
-                                                        }
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              StreamBuilder(
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(12),
+                                              child: StreamBuilder(
                                                 stream: playlistsStream,
                                                 builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot) {
                                                   if (snapshot.hasData) {
@@ -1027,33 +943,112 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                     return Column(
                                                       children: [
                                                         Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                           children: [
-                                                            Expanded(
-                                                              child: Row(
-                                                                children: [
-                                                                  Icon(
-                                                                    Icons.local_fire_department,
-                                                                    size: 24,
-                                                                    color: Colors.white,
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width: 8,
-                                                                  ),
-                                                                  Text(
-                                                                    "Popular Songs",
-                                                                    style: TextStyle(
-                                                                      color: Colors.white,
-                                                                      fontSize: 16,
-                                                                    ),
-                                                                  ),
-                                                                ],
+                                                            Icon(
+                                                              Icons.local_fire_department,
+                                                              size: 24,
+                                                              color: Colors.black,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            Text(
+                                                              "Latest Songs",
+                                                              style: TextStyle(
+                                                                color: Colors.black,
+                                                                fontSize: 16,
                                                               ),
                                                             ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(
+                                                          height: 20,
+                                                        ),
+                                                        MasonryGridView(
+                                                          gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                                            crossAxisCount: 2,
+                                                          ),
+                                                          physics: NeverScrollableScrollPhysics(),
+                                                          shrinkWrap: true,
+                                                          mainAxisSpacing: 12,
+                                                          crossAxisSpacing: 12,
+                                                          children: [
+                                                            for (var entry in (myDoc.data() ?? {}).entries.take(4))
+                                                                  () {
+                                                                var data = entry.value;
+
+                                                                return FutureBuilder(
+                                                                  future: () async {
+                                                                    return FirebaseStorage.instance.ref("Playlists/Images/${data['thumbnail']}").getDownloadURL();
+                                                                  }(),
+                                                                  builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                                                    if (snapshot.hasData) {
+                                                                      return Container(
+                                                                        decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(16),
+                                                                          image: DecorationImage(
+                                                                            image: NetworkImage(snapshot.data ?? ""),
+                                                                            fit: BoxFit.cover,
+                                                                          ),
+                                                                        ),
+                                                                        padding: EdgeInsets.all(12),
+                                                                        child: Column(
+                                                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                                                          children: [
+                                                                            Icon(
+                                                                              Icons.play_circle_fill,
+                                                                              size: 48,
+                                                                              color: Colors.white,
+                                                                            ),
+                                                                            Text(
+                                                                              data['title'],
+                                                                              style: TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 12,
+                                                                                fontWeight: FontWeight.bold,
+                                                                              ),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                            Text(
+                                                                              data['subtitle'],
+                                                                              style: TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 12,
+                                                                              ),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      );
+                                                                    } else {
+                                                                      return Center(child: CircularProgressIndicator());
+                                                                    }
+                                                                  },
+                                                                );
+                                                              }(),
+                                                          ],
+                                                        ),
+                                                        SizedBox(
+                                                          height: 20,
+                                                        ),
+                                                        Row(
+                                                          children: [
                                                             Icon(
-                                                              Icons.tune,
+                                                              Icons.local_fire_department,
                                                               size: 24,
-                                                              color: Colors.white,
+                                                              color: Colors.black,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            Text(
+                                                              "Popular Songs",
+                                                              style: TextStyle(
+                                                                color: Colors.black,
+                                                                fontSize: 16,
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
@@ -1070,7 +1065,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                           crossAxisSpacing: 12,
                                                           children: [
                                                             for (var entry in (myDoc.data() ?? {}).entries)
-                                                              () {
+                                                                  () {
                                                                 var data = entry.value;
 
                                                                 return FutureBuilder(
@@ -1135,8 +1130,8 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   }
                                                 },
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -1144,7 +1139,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                       child: Container(
                                         margin: EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: newPrimaryColor,
+                                          color: Color.fromRGBO(122, 107, 188, 1),
                                           borderRadius: BorderRadius.circular(96),
                                         ),
                                         padding: EdgeInsets.all(8),
@@ -1185,13 +1180,14 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                     child: Icon(
                                                       Icons.explore_rounded,
                                                       size: 48,
+                                                      color: Colors.white,
                                                     ),
                                                   ),
                                                   SizedBox(
                                                     width: 8,
                                                   ),
                                                   Text(
-                                                    "Discover",
+                                                    "DND",
                                                     style: TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 16,
@@ -1202,7 +1198,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                             ),
                                             Container(
                                               decoration: BoxDecoration(
-                                                color: Color.fromRGBO(37, 37, 37, 1),
+                                                color: Colors.white,
                                                 borderRadius: BorderRadius.circular(16),
                                               ),
                                               width: 3,
@@ -1211,37 +1207,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                             ),
                                             Expanded(
                                               child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                mainAxisAlignment: MainAxisAlignment.end,
                                                 children: [
                                                   Material(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(96),
-                                                      side: BorderSide(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                    ),
-                                                    color: Colors.transparent,
-                                                    child: InkWell(
-                                                      onTap: () {},
-                                                      borderRadius: BorderRadius.circular(96),
-                                                      child: Padding(
-                                                        padding: EdgeInsets.all(4),
-                                                        child: Icon(
-                                                          Icons.queue_music_outlined,
-                                                          size: 32,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Material(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(96),
-                                                      side: BorderSide(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                    ),
                                                     color: Colors.transparent,
                                                     child: InkWell(
                                                       onTap: () {
@@ -1258,18 +1226,15 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                         child: Icon(
                                                           Icons.notifications,
                                                           size: 32,
+                                                          color: Colors.white,
                                                         ),
                                                       ),
                                                     ),
                                                   ),
+                                                  SizedBox(
+                                                    width: 12,
+                                                  ),
                                                   Material(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(96),
-                                                      side: BorderSide(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                    ),
                                                     color: Colors.transparent,
                                                     child: InkWell(
                                                       onTap: () {
@@ -1289,8 +1254,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                       child: Padding(
                                                         padding: EdgeInsets.all(4),
                                                         child: Icon(
-                                                          Icons.person,
+                                                          Icons.message,
                                                           size: 32,
+                                                          color: Colors.white,
                                                         ),
                                                       ),
                                                     ),

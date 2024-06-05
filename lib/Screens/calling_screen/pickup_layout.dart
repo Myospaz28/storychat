@@ -48,6 +48,7 @@ class PickupLayout extends StatelessWidget {
                   return scaffold;
                 },
               )
-            : Splashscreen();
+            : Splashscreen(
+    );
   }
 }

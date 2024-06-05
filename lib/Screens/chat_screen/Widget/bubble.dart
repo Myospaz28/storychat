@@ -1,12 +1,12 @@
 //*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
 
-import '/Configs/Dbkeys.dart';
-import '/Configs/app_constants.dart';
-import '/Services/Providers/seen_provider.dart';
-import '/Services/localization/language_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '/Configs/Dbkeys.dart';
 import '/Configs/Enum.dart';
+import '/Services/Providers/seen_provider.dart';
+import '/Services/localization/language_constants.dart';
 
 class Bubble extends StatelessWidget {
   const Bubble({
@@ -46,14 +46,12 @@ class Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool seen =
         getSeenStatus(SeenProvider.of(context).value ?? 0.0) ?? false;
-    final bg = isMe ? storychatCHATBUBBLEcolor : storychatWhite;
+    final bg = isMe ? Color.fromRGBO(254, 210, 210, 1) : Color.fromRGBO(166, 171, 209, 1);
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     dynamic icon = delivered is bool && delivered
         ? (seen ? Icons.done_all : Icons.done_all)
         : Icons.access_time;
-    final color = isMe
-        ? storychatBlack.withOpacity(0.5)
-        : storychatBlack.withOpacity(0.5);
+    final color = isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white;
     icon = Icon(icon, size: 14.0, color: seen ? Colors.lightBlue : color);
     if (delivered is Future) {
       icon = FutureBuilder(

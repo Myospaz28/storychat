@@ -141,7 +141,7 @@ class StatusProvider with ChangeNotifier {
         .then((allusers) async {
       if (allusers.docs.length > 0) {
         for (var eachUser in allusers.docs) {
-          if (eachUser[Dbkeys.phone] != myphone) {
+          if (eachUser[Dbkeys.username] != myphone) {
             if (eachUser.data().containsKey(Dbkeys.lastOnline)) {
               if (DateTime.now()
                       .difference(DateTime.fromMillisecondsSinceEpoch(

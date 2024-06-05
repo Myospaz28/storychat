@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 // New
 
 final bool showNewWidgets = true;
-final Color newPrimaryColor = Color.fromRGBO(255, 145, 77, 1);
-final Color newSecondaryPrimaryColor = Color.fromRGBO(255, 77, 77, 1.0);
+final Color newPrimaryColor = Color.fromRGBO(122, 107, 187, 1);
+final Color newSecondaryPrimaryColor = Color.fromRGBO(122, 107, 187, 1.0);
 final InputBorder newTextBoxBorder = OutlineInputBorder(
   borderRadius: BorderRadius.circular(96),
   borderSide: BorderSide(
@@ -32,9 +32,9 @@ final InputBorder newTextBoxFocusedBorder = newTextBoxBorder.copyWith(
 
 // Unique Color for your App -----
 
-final storychatPRIMARYcolor = Color.fromRGBO(255, 145, 77, 1);
+final storychatPRIMARYcolor = Color.fromRGBO(122, 107, 187, 1);
 // you may change this as per your theme. This applies to large buttons, tabs, text heading etc.
-final storychatSECONDARYolor = Color.fromRGBO(255, 145, 77, 1);
+final storychatSECONDARYolor = Color.fromRGBO(122, 107, 187, 1);
 // you may change this as per your theme. This applies to small buttons, icons & highlights
 
 const SplashBackgroundSolidColor = Colors.white;
@@ -42,7 +42,7 @@ const SplashBackgroundSolidColor = Colors.white;
 const IsSplashOnlySolidColor = false;
 
 // light mode colors -----
-final storychatAPPBARcolorLightMode = Color.fromRGBO(255, 145, 77, 1);
+final storychatAPPBARcolorLightMode = Color.fromRGBO(122, 107, 187, 1);
 // you may change this as per your theme
 final storychatBACKGROUNDcolorLightMode = Color(0xfff4f5f6);
 final storychatCONTAINERboxColorLightMode = Color(0xffffffff);

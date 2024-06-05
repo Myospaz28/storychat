@@ -2751,33 +2751,33 @@ class _GroupChatPageState extends State<GroupChatPage>
             int timestamp2 = DateTime.now().millisecondsSinceEpoch;
             if (content.trim() != '') {
               Map<String, dynamic>? targetPeer =
-                  widget.model.userData[list[index][Dbkeys.phone]];
+                  widget.model.userData[list[index][Dbkeys.username]];
               if (targetPeer == null) {
                 await ChatController.request(
                     widget.currentUserno,
-                    list[index][Dbkeys.phone],
+                    list[index][Dbkeys.username],
                     Fiberchat.getChatId(
-                        widget.currentUserno, list[index][Dbkeys.phone]));
+                        widget.currentUserno, list[index][Dbkeys.username]));
               }
               var chatId = Fiberchat.getChatId(
-                  widget.currentUserno, list[index][Dbkeys.phone]);
+                  widget.currentUserno, list[index][Dbkeys.username]);
               await FirebaseFirestore.instance
                   .collection(DbPaths.collectionmessages)
                   .doc(chatId)
                   .set({
                 widget.currentUserno: true,
-                list[index][Dbkeys.phone]: list[index][Dbkeys.lastSeen],
+                list[index][Dbkeys.username]: list[index][Dbkeys.lastSeen],
               }, SetOptions(merge: true)).then((value) async {
                 Future messaging = FirebaseFirestore.instance
                     .collection(DbPaths.collectionusers)
-                    .doc(list[index][Dbkeys.phone])
+                    .doc(list[index][Dbkeys.username])
                     .collection(Dbkeys.chatsWith)
                     .doc(Dbkeys.chatsWith)
                     .set({
                   widget.currentUserno: 4,
                 }, SetOptions(merge: true));
                 widget.model.addMessage(
-                    list[index][Dbkeys.phone], timestamp2, messaging);
+                    list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
                 Future messaging = FirebaseFirestore.instance
                     .collection(DbPaths.collectionmessages)
@@ -2786,7 +2786,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     .doc('$timestamp2')
                     .set({
                   Dbkeys.from: widget.currentUserno,
-                  Dbkeys.to: list[index][Dbkeys.phone],
+                  Dbkeys.to: list[index][Dbkeys.username],
                   Dbkeys.timestamp: timestamp2,
                   Dbkeys.content: encrypted,
                   Dbkeys.messageType: mssgDoc[Dbkeys.messageType],
@@ -2800,7 +2800,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   Dbkeys.isMuted: false,
                 }, SetOptions(merge: true));
                 widget.model.addMessage(
-                    list[index][Dbkeys.phone], timestamp2, messaging);
+                    list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
                 if (index >= list.length - 1) {
                   Fiberchat.toast(

@@ -274,6 +274,7 @@ class Dbkeys {
   static final String chatStatus = 'chatStatus';
   static final String lastSeen = 'lastSeen';
   static final String lastOnline = 'lastTimeOnline';
+  static final String username = 'username';
   static final String phone = 'phone';
   static final String phoneRaw = 'phone_raw';
   static final String isSecuritySetupDone = 'isd';

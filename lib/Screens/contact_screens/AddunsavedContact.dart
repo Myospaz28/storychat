@@ -1,25 +1,27 @@
 //*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
 
 import 'dart:core';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '/Configs/Dbkeys.dart';
 import '/Configs/Dbpaths.dart';
 import '/Configs/app_constants.dart';
+import '/Models/DataModel.dart';
 import '/Screens/auth_screens/login.dart';
 import '/Screens/calling_screen/pickup_layout.dart';
+import '/Screens/chat_screen/chat.dart';
 import '/Services/Admob/admob.dart';
 import '/Services/Providers/Observer.dart';
 import '/Services/localization/language_constants.dart';
-import '/Screens/chat_screen/chat.dart';
-import '/Models/DataModel.dart';
 import '/Utils/color_detector.dart';
 import '/Utils/theme_management.dart';
 import '/Utils/utils.dart';
 import '/widgets/MyElevatedButton/MyElevatedButton.dart';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AddunsavedNumber extends StatefulWidget {
   final String? currentUserNo;
@@ -59,7 +61,7 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
     // Fiberchat.toast(searchphone);
     FirebaseFirestore.instance
         .collection(DbPaths.collectionusers)
-        .where(Dbkeys.phonenumbervariants, arrayContains: searchphone)
+        .where(Dbkeys.username, isEqualTo: searchphone)
         .get()
         .then((user) {
       if (user.docs.isNotEmpty) {
@@ -80,7 +82,7 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                         unread: 0,
                         currentUserNo: widget.currentUserNo,
                         model: widget.model!,
-                        peerNo: searchphone)));
+                        peerNo: user.docs[0].get(Dbkeys.phone),)));
           }
         });
       } else {
@@ -93,9 +95,8 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
     }).catchError((err) {});
   }
 
-  final _phoneNo = TextEditingController();
+  final username = TextEditingController();
 
-  String? phoneCode = DEFAULT_COUNTTRYCODE_NUMBER;
   Widget buildWidget() {
     final observer = Provider.of<Observer>(context, listen: false);
     return Column(
@@ -111,17 +112,12 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
             // width: w / 1.18,
             child: Form(
               // key: _enterNumberFormKey,
-              child: MobileInputWithOutline(
-                buttonhintTextColor: storychatGrey,
-                borderColor: storychatGrey.withOpacity(0.2),
-                controller: _phoneNo,
-                initialCountryCode: DEFAULT_COUNTTRYCODE_ISO,
-                onSaved: (phone) {
-                  setState(() {
-                    phoneCode = phone!.countryCode;
-                    istyping = true;
-                  });
-                },
+              child: TextFormField(
+                controller: username,
+                decoration: InputDecoration(
+                  contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  hintText: getTranslated(context, 'enternum'),
+                ),
               ),
             ),
           ),
@@ -140,22 +136,15 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                   onpressed: () {
                     // RegExp e164 = new RegExp(r'^\+[1-9]\d{1,14}$');
 
-                    String _phone = _phoneNo.text.toString().trim();
-                    if ((_phone.isNotEmpty
-                        // &&
-                        //         e164.hasMatch(phoneCode! + _phone)
-                        ) &&
-                        widget.currentUserNo != phoneCode! + _phone) {
+                    String _username = username.text.toString().trim();
+                    if (_username.isNotEmpty) {
                       setState(() {
                         isLoading = true;
                       });
 
-                      getUser(phoneCode! + _phone);
+                      getUser(_username);
                     } else {
-                      Fiberchat.toast(
-                          widget.currentUserNo != phoneCode! + _phone
-                              ? getTranslated(context, 'validnum')
-                              : getTranslated(context, 'validnum'));
+                      Fiberchat.toast(getTranslated(context, 'validnum'));
                     }
                   },
                 ),
@@ -225,7 +214,8 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                           ? storychatAPPBARcolorDarkMode
                           : storychatAPPBARcolorLightMode),
                 ),
-              )),
+            ),
+          ),
           body: Stack(children: <Widget>[
             Container(
                 child: Center(
@@ -240,13 +230,7 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(28.0),
-                                child: Text(
-                                    phoneCode! +
-                                        '-' +
-                                        _phoneNo.text.trim() +
-                                        ' ' +
-                                        getTranslated(context, 'notexist') +
-                                        Appname,
+                                  child: Text(username.text.trim() + ' ' + getTranslated(context, 'notexist') + Appname,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                         color: pickTextColorBasedOnBgColorAdvanced(Thm
@@ -254,7 +238,7 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                                             ? storychatBACKGROUNDcolorDarkMode
                                             : storychatBACKGROUNDcolorLightMode),
                                         fontWeight: FontWeight.w500,
-                                        fontSize: 20.0)),
+                                        fontSize: 20.0,),),
                               ),
                               SizedBox(
                                 height: 10.0,
@@ -269,15 +253,20 @@ class _AddunsavedNumberState extends State<AddunsavedNumber> {
                                   Fiberchat.invite(context);
                                 },
                               ),
-                            ])
-                  : Container(),
-            )),
-            // Loading
-            buildWidget()
-          ]),
+                              ],
+                            )
+                      : Container(),
+                ),
+              ),
+              // Loading
+              buildWidget()
+            ],
+          ),
           backgroundColor: Thm.isDarktheme(widget.prefs)
               ? storychatBACKGROUNDcolorDarkMode
               : storychatBACKGROUNDcolorLightMode,
-        )));
+        ),
+      ),
+    );
   }
 }

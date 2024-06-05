@@ -97,7 +97,7 @@ class SearchChatsState extends State<SearchChats> {
   bool isLoading = false;
 
   Widget buildItem(BuildContext context, Map<String, dynamic> user) {
-    if (user[Dbkeys.phone] == currentUserNo) {
+    if (user[Dbkeys.username] == currentUserNo) {
       return Container(width: 0, height: 0);
     } else {
       return StreamBuilder(
@@ -137,7 +137,7 @@ class SearchChatsState extends State<SearchChats> {
                   onTap: () {
                     if (_cachedModel!.currentUser![Dbkeys.locked] != null &&
                         _cachedModel!.currentUser![Dbkeys.locked]
-                            .contains(user[Dbkeys.phone])) {
+                            .contains(user[Dbkeys.username])) {
                       NavigatorState state = Navigator.of(context);
                       ChatController.authenticate(_cachedModel!,
                           getTranslated(context, 'auth_neededchat'),
@@ -204,7 +204,7 @@ class SearchChatsState extends State<SearchChats> {
   }
 
   Stream<MessageData> getUnread(Map<String, dynamic> user) {
-    String chatId = Fiberchat.getChatId(currentUserNo!, user[Dbkeys.phone]);
+    String chatId = Fiberchat.getChatId(currentUserNo!, user[Dbkeys.username]);
     var controller = StreamController<MessageData>.broadcast();
     unreadSubscriptions.add(FirebaseFirestore.instance
         .collection(DbPaths.collectionmessages)
@@ -249,13 +249,13 @@ class SearchChatsState extends State<SearchChats> {
     List<Map<String, dynamic>> filtered = List.from(<Map<String, dynamic>>[]);
 
     _users.sort((a, b) {
-      int aTimestamp = _lastSpokenAt[a[Dbkeys.phone]] ?? 0;
-      int bTimestamp = _lastSpokenAt[b[Dbkeys.phone]] ?? 0;
+      int aTimestamp = _lastSpokenAt[a[Dbkeys.username]] ?? 0;
+      int bTimestamp = _lastSpokenAt[b[Dbkeys.username]] ?? 0;
       return bTimestamp - aTimestamp;
     });
 
     if (!showHidden) {
-      _users.removeWhere((_user) => _isHidden(_user[Dbkeys.phone]));
+      _users.removeWhere((_user) => _isHidden(_user[Dbkeys.username]));
     }
 
     return Stack(

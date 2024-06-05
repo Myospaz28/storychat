@@ -22,3 +22,15 @@ List phoneNumberVariantsList({
   ];
   return list;
 }
+
+Map<String, String> extractPhoneNumberAndCountryCode(List<String> variants) {
+  List<String> parts = variants[1].split("-");
+
+  String phoneNumber = parts[1];
+  String countryCode = parts[0];
+
+  return {
+    'phoneNumber': phoneNumber,
+    'countryCode': countryCode,
+  };
+}

@@ -323,7 +323,7 @@ class _ContactsState extends State<Contacts>
                             },
                           ),
                           IconButton(
-                            icon: _searchIcon!,
+                            icon: _searchIcon ?? Icon(Icons.search),
                             onPressed: _searchPressed,
                           )
                         ],

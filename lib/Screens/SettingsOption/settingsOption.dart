@@ -129,7 +129,7 @@ class _SettingsOptionState extends State<SettingsOption> {
                                 subtitle: Padding(
                                   padding: const EdgeInsets.only(top: 7),
                                   child: Text(
-                                    myDoc[Dbkeys.aboutMe] == null || myDoc[Dbkeys.aboutMe] == '' ? myDoc[Dbkeys.phone] : myDoc[Dbkeys.aboutMe],
+                                    myDoc[Dbkeys.aboutMe] == null || myDoc[Dbkeys.aboutMe] == '' ? myDoc[Dbkeys.username] : myDoc[Dbkeys.aboutMe],
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(fontSize: 14, color: storychatGrey),

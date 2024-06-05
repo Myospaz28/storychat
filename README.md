@@ -17,3 +17,9 @@ https://codecanyon.net/item/fiberchat-web-chat-calling-web-app-flutter-web-app/4
 ## Admin App:
 
 https://codecanyon.net/item/fiberchat-admin-app-android-ios-control-monitor-fiberchat-user-whatsapp-clone-app/32050394
+
+
+
+Setting icon on chat screen app bar instead of homepage
+Two screen for login and register
+Chat background white and border orange

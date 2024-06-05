@@ -1,4 +1,5 @@
 {
+     "username_hint": "Username",
      "name_hint": "Enter your name",
      "enter_fullname": "Full name",
      "enter_mobilenumber": "Mobile Number",
@@ -110,7 +111,7 @@
      "welcomeback": "Welcome back !",
      "failedlogin": "Failed to Log In!",
      "entervalidmob": "Please enter a valid mobile number.",
-     "nameem": "Name cannot be empty!",
+     "usernameem": "Username cannot be empty!",
      "correctotp": "Enter Correct Code",
      "authfailed": "Authentication failed !",
      "authh": "Authentication",

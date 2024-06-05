@@ -5,6 +5,11 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '/Configs/Dbkeys.dart';
 import '/Configs/Dbpaths.dart';
 import '/Configs/app_constants.dart';
@@ -22,10 +27,6 @@ import '/Utils/open_settings.dart';
 import '/Utils/permissions.dart';
 import '/Utils/theme_management.dart';
 import '/Utils/utils.dart';
-import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileView extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -86,9 +87,7 @@ class _ProfileViewState extends State<ProfileView> {
   bool hasPeerBlockedMe = false;
   listenToBlock() {
     chatStatusSubscriptionForPeer = FirebaseFirestore.instance
-        .collection(DbPaths.collectionusers)
-        .doc(widget.user[Dbkeys.phone])
-        .collection(Dbkeys.chatsWith)
+        .collection(DbPaths.collectionusers).doc(widget.user[Dbkeys.username]).collection(Dbkeys.chatsWith)
         .doc(Dbkeys.chatsWith)
         .snapshots()
         .listen((doc) {
@@ -130,7 +129,7 @@ class _ProfileViewState extends State<ProfileView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    getTranslated(context, 'enter_mobilenumber'),
+                    getTranslated(context, 'username_hint'),
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -147,7 +146,7 @@ class _ProfileViewState extends State<ProfileView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.user[Dbkeys.phone],
+                    widget.user[Dbkeys.username],
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         fontWeight: FontWeight.normal,
@@ -216,65 +215,6 @@ class _ProfileViewState extends State<ProfileView> {
                                             },
                                   icon: Icon(
                                     Icons.phone,
-                                    color: storychatPRIMARYcolor,
-                                  )),
-                        if (widget.currentUserNo != widget.user[Dbkeys.phone])
-                          observer.isCallFeatureTotallyHide == true ||
-                                  observer.isOngoingCall
-                              ? SizedBox()
-                              : IconButton(
-                                  onPressed: observer.iscallsallowed == false
-                                      ? () {
-                                          Fiberchat.showRationale(getTranslated(
-                                              context, 'callnotallowed'));
-                                        }
-                                      : hasPeerBlockedMe == true
-                                          ? () {
-                                              Fiberchat.toast(
-                                                getTranslated(
-                                                    context, 'userhasblocked'),
-                                              );
-                                            }
-                                          : () async {
-                                              await Permissions
-                                                      .cameraAndMicrophonePermissionsGranted()
-                                                  .then((isgranted) {
-                                                if (isgranted == true) {
-                                                  call(context, true);
-                                                } else {
-                                                  Fiberchat.showRationale(
-                                                      getTranslated(
-                                                          context, 'pmc'));
-                                                  Navigator.push(
-                                                      context,
-                                                      new MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              OpenSettings(
-                                                                permtype:
-                                                                    'contact',
-                                                                prefs: widget
-                                                                    .prefs,
-                                                              )));
-                                                }
-                                              }).catchError((onError) {
-                                                Fiberchat.showRationale(
-                                                    getTranslated(
-                                                        context, 'pmc'));
-                                                Navigator.push(
-                                                    context,
-                                                    new MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            OpenSettings(
-                                                              permtype:
-                                                                  'contact',
-                                                              prefs:
-                                                                  widget.prefs,
-                                                            )));
-                                              });
-                                            },
-                                  icon: Icon(
-                                    Icons.videocam_rounded,
-                                    size: 26,
                                     color: storychatPRIMARYcolor,
                                   )),
                         if (widget.currentUserNo != widget.user[Dbkeys.phone])

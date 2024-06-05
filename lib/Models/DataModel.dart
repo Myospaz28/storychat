@@ -37,7 +37,7 @@ class DataModel extends Model {
   }
 
   addUser(DocumentSnapshot<Map<String, dynamic>> user) {
-    userData[user.data()![Dbkeys.phone]] = user.data();
+    userData[user.data()![Dbkeys.username]] = user.data();
     notifyListeners();
   }
 
