@@ -1,19 +1,20 @@
 import 'dart:io';
-import '/Configs/app_constants.dart';
-import '/Configs/optional_constants.dart';
-import '/Services/helpers/size.dart';
-import '/Services/helpers/transition.dart';
 
-import '/Services/helpers/widgets/widgets.dart';
-import '/Services/localization/language_constants.dart';
-import '/Utils/utils.dart';
-import '/widgets/VideoEditor/export_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_editor/video_editor.dart';
+
+import '/Configs/app_constants.dart';
+import '/Configs/optional_constants.dart';
+import '/Services/helpers/size.dart';
+import '/Services/helpers/transition.dart';
+import '/Services/helpers/widgets/widgets.dart';
+import '/Services/localization/language_constants.dart';
+import '/Utils/utils.dart';
+import '/widgets/VideoEditor/export_service.dart';
 
 class VideoEditor extends StatefulWidget {
   VideoEditor(
@@ -50,8 +51,7 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   void initState() {
-    _controller = VideoEditorController.file(widget.file,
-        maxDuration: Duration(minutes: 20))
+    _controller = VideoEditorController.file(widget.file, maxDuration: Duration(minutes: 20))
       ..initialize().then((_) => setState(() {})).catchError((onError) {
         Navigator.of(context).pop();
       });
@@ -66,8 +66,9 @@ class _VideoEditorState extends State<VideoEditor> {
     super.dispose();
   }
 
-  void _openCropScreen() => Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (BuildContext context) => CropScreen(controller: _controller)));
+  void _openCropScreen() =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => CropScreen(controller: _controller)));
+
   void _exportCover({required Function(File file) onGenCover}) async {
     final config = CoverFFmpegVideoEditorConfig(_controller);
     final execute = await config.getExecuteConfig();
@@ -105,7 +106,7 @@ class _VideoEditorState extends State<VideoEditor> {
     await ExportService.runFFmpegCommand(
       await config.getExecuteConfig(),
       onProgress: (stats) {
-        _exportingProgress.value = config.getFFmpegProgress(stats.getTime());
+        _exportingProgress.value = config.getFFmpegProgress(stats.getTime().toInt());
       },
       onError: (e, s) {
         Fiberchat.toast("Failed to export");
@@ -151,9 +152,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 onGenCover: (coverFile) async {
                   imageInUnit8List = coverFile.readAsBytesSync();
                   final tempDir = await getTemporaryDirectory();
-                  File thumbnailFile = await File(
-                          '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.png')
-                      .create();
+                  File thumbnailFile = await File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.png').create();
                   thumbnailFile.writeAsBytesSync(imageInUnit8List);
                   Navigator.of(context).pop();
                   widget.onEditExported(file, thumbnailFile);
@@ -167,9 +166,7 @@ class _VideoEditorState extends State<VideoEditor> {
             } else {
               imageInUnit8List = _controller.selectedCoverVal!.thumbData!;
               final tempDir = await getTemporaryDirectory();
-              File thumbnailFile = await File(
-                      '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.png')
-                  .create();
+              File thumbnailFile = await File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.png').create();
               thumbnailFile.writeAsBytesSync(imageInUnit8List);
               Navigator.of(context).pop();
               widget.onEditExported(file, thumbnailFile);
@@ -230,6 +227,7 @@ class _VideoEditorState extends State<VideoEditor> {
   // }
 
   DateTime? currentBackPressTime = DateTime.now();
+
   Future<bool> onWillPop() {
     DateTime now = DateTime.now();
     if (now.difference(currentBackPressTime!) > Duration(seconds: 3)) {
@@ -243,9 +241,8 @@ class _VideoEditorState extends State<VideoEditor> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: Colors.black,
-        statusBarIconBrightness: Brightness.light));
+    SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(statusBarColor: Colors.black, statusBarIconBrightness: Brightness.light));
     return WillPopScope(
         onWillPop: onWillPop,
         child: Scaffold(
@@ -280,8 +277,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                               color: Colors.white,
                                               shape: BoxShape.circle,
                                             ),
-                                            child: Icon(Icons.play_arrow,
-                                                color: Colors.black),
+                                            child: Icon(Icons.play_arrow, color: Colors.black),
                                           ),
                                         ),
                                       ),
@@ -300,47 +296,37 @@ class _VideoEditorState extends State<VideoEditor> {
                                       tabs: [
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
-                                          child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Padding(
-                                                    padding: EdgeInsets.all(5),
-                                                    child: Icon(
-                                                      Icons.content_cut,
-                                                      size: 16,
-                                                      // color: Colors.white,
-                                                    )),
-                                                SizedBox(
-                                                  width: 4,
-                                                ),
-                                                if (IsShowTextLabelsInPhotoVideoEditorPage ==
-                                                    true)
-                                                  Text(getTranslated(
-                                                      context, 'trim'))
-                                              ]),
+                                          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                            Padding(
+                                                padding: EdgeInsets.all(5),
+                                                child: Icon(
+                                                  Icons.content_cut,
+                                                  size: 16,
+                                                  // color: Colors.white,
+                                                )),
+                                            SizedBox(
+                                              width: 4,
+                                            ),
+                                            if (IsShowTextLabelsInPhotoVideoEditorPage == true)
+                                              Text(getTranslated(context, 'trim'))
+                                          ]),
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
-                                          child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Padding(
-                                                    padding: EdgeInsets.all(5),
-                                                    child: Icon(
-                                                      Icons.video_label,
-                                                      size: 16,
-                                                      // color: Colors.white
-                                                    )),
-                                                SizedBox(
-                                                  width: 4,
-                                                ),
-                                                if (IsShowTextLabelsInPhotoVideoEditorPage ==
-                                                    true)
-                                                  Text(getTranslated(
-                                                      context, 'cover'))
-                                              ]),
+                                          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                            Padding(
+                                                padding: EdgeInsets.all(5),
+                                                child: Icon(
+                                                  Icons.video_label,
+                                                  size: 16,
+                                                  // color: Colors.white
+                                                )),
+                                            SizedBox(
+                                              width: 4,
+                                            ),
+                                            if (IsShowTextLabelsInPhotoVideoEditorPage == true)
+                                              Text(getTranslated(context, 'cover'))
+                                          ]),
                                         ),
                                       ],
                                     ),
@@ -348,15 +334,11 @@ class _VideoEditorState extends State<VideoEditor> {
                                       child: TabBarView(
                                         children: [
                                           Container(
-                                              child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: _trimSlider())),
+                                              child:
+                                                  Column(mainAxisAlignment: MainAxisAlignment.center, children: _trimSlider())),
                                           Container(
                                             child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [_coverSelection()]),
+                                                mainAxisAlignment: MainAxisAlignment.center, children: [_coverSelection()]),
                                           ),
                                         ],
                                       ),
@@ -365,28 +347,18 @@ class _VideoEditorState extends State<VideoEditor> {
                               _customSnackBar(),
                               ValueListenableBuilder(
                                 valueListenable: _isExporting,
-                                builder: (_, bool export, __) =>
-                                    OpacityTransition(
-                                        visible: export,
-                                        child: Padding(
-                                            padding: const EdgeInsets.all(18.0),
-                                            child: ValueListenableBuilder(
-                                              valueListenable:
-                                                  _exportingProgress,
-                                              builder: (_, double value, __) =>
-                                                  LinearPercentIndicator(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width /
-                                                              1.2,
-                                                      lineHeight: 8.0,
-                                                      percent:
-                                                          (value * 100).ceil() /
-                                                              100,
-                                                      progressColor:
-                                                          storychatSECONDARYolor),
-                                            ))),
+                                builder: (_, bool export, __) => OpacityTransition(
+                                    visible: export,
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(18.0),
+                                        child: ValueListenableBuilder(
+                                          valueListenable: _exportingProgress,
+                                          builder: (_, double value, __) => LinearPercentIndicator(
+                                              width: MediaQuery.of(context).size.width / 1.2,
+                                              lineHeight: 8.0,
+                                              percent: (value * 100).ceil() / 100,
+                                              progressColor: storychatSECONDARYolor),
+                                        ))),
                               )
                             ])))
                   ])
@@ -442,9 +414,7 @@ class _VideoEditorState extends State<VideoEditor> {
                   }
                   Navigator.of(context).pop();
                 },
-                child: Icon(Icons.close,
-                    color:
-                        _isExporting.value ? Colors.transparent : Colors.grey),
+                child: Icon(Icons.close, color: _isExporting.value ? Colors.transparent : Colors.grey),
               ),
             ),
             Expanded(
@@ -454,9 +424,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 },
                 child: Icon(
                   Icons.done,
-                  color: _isExporting.value
-                      ? Colors.transparent
-                      : storychatSECONDARYolor,
+                  color: _isExporting.value ? Colors.transparent : storychatSECONDARYolor,
                 ),
               ),
             ),
@@ -531,8 +499,7 @@ class _VideoEditorState extends State<VideoEditor> {
           width: double.infinity,
           color: Colors.black.withOpacity(0.8),
           child: Center(
-            child: Text(_exportText,
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(_exportText, style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ),
@@ -565,8 +532,7 @@ class CropScreen extends StatelessWidget {
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () =>
-                      controller.rotate90Degrees(RotateDirection.right),
+                  onTap: () => controller.rotate90Degrees(RotateDirection.right),
                   child: Icon(Icons.rotate_right, color: Colors.white),
                 ),
               )
@@ -585,8 +551,7 @@ class CropScreen extends StatelessWidget {
                   child: Center(
                     child: Text(
                       getTranslated(context, 'cancel').toUpperCase(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
@@ -594,8 +559,7 @@ class CropScreen extends StatelessWidget {
               buildSplashTap("16:9", 16 / 9, padding: Margin.horizontal(10)),
               buildSplashTap("1:1", 1 / 1),
               buildSplashTap("4:5", 4 / 5, padding: Margin.horizontal(10)),
-              buildSplashTap(getTranslated(context, 'no').toUpperCase(), null,
-                  padding: Margin.right(10)),
+              buildSplashTap(getTranslated(context, 'no').toUpperCase(), null, padding: Margin.right(10)),
               Expanded(
                 child: SplashTap(
                   onTap: () {
@@ -611,8 +575,7 @@ class CropScreen extends StatelessWidget {
                   child: Center(
                     child: Text(
                       getTranslated(context, 'ok').toUpperCase(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),

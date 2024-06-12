@@ -126,7 +126,8 @@ class Misc {
       view: View.of(context),
       child: RenderPositionedBox(child: repaintBoundary),
       configuration: ViewConfiguration(
-        size: logicalSize,
+        // size: logicalSize,
+        logicalConstraints: BoxConstraints(maxWidth: logicalSize.width,maxHeight: logicalSize.height),
         devicePixelRatio: pixelRatio ?? 1.0,
       ),
     );

@@ -3,72 +3,76 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipic;
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:giphy_get/giphy_get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:link_preview_generator/link_preview_generator.dart';
+import 'package:media_info/media_info.dart';
+import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_compress/video_compress.dart' as compress;
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+import '/Configs/Dbkeys.dart';
+import '/Configs/Dbpaths.dart';
+import '/Configs/Enum.dart';
 import '/Configs/app_constants.dart';
 import '/Configs/optional_constants.dart';
+import '/Models/DataModel.dart';
 import '/Screens/Broadcast/BroadcastDetails.dart';
 import '/Screens/Groups/widget/groupChatBubble.dart';
+import '/Screens/call_history/callhistory.dart';
 import '/Screens/calling_screen/pickup_layout.dart';
 import '/Screens/chat_screen/chat.dart';
+import '/Screens/chat_screen/utils/photo_view.dart';
+import '/Screens/chat_screen/utils/uploadMediaWithProgress.dart';
+import '/Screens/contact_screens/ContactsSelect.dart';
+import '/Screens/privacypolicy&TnC/PdfViewFromCachedUrl.dart';
 import '/Services/Admob/admob.dart';
 import '/Services/Providers/BroadcastProvider.dart';
-import '/Screens/chat_screen/utils/uploadMediaWithProgress.dart';
-import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
 import '/Services/Providers/Observer.dart';
+import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
 import '/Services/localization/language_constants.dart';
 import '/Utils/color_detector.dart';
 import '/Utils/custom_url_launcher.dart';
 import '/Utils/emoji_detect.dart';
 import '/Utils/mime_type.dart';
+import '/Utils/save.dart';
 import '/Utils/setStatusBarColor.dart';
 import '/Utils/theme_management.dart';
+import '/Utils/unawaited.dart';
 import '/Utils/utils.dart';
 import '/widgets/AllinOneCameraGalleryImageVideoPicker/AllinOneCameraGalleryImageVideoPicker.dart';
+import '/widgets/AudioRecorder/Audiorecord.dart';
 import '/widgets/CameraGalleryImagePicker/camera_image_gallery_picker.dart';
 import '/widgets/CameraGalleryImagePicker/multiMediaPicker.dart';
+import '/widgets/DocumentPicker/documentPicker.dart';
 import '/widgets/DownloadManager/download_all_file_type.dart';
 import '/widgets/InfiniteList/InfiniteCOLLECTIONListViewWidget.dart';
-import '/widgets/VideoEditor/video_editor.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:link_preview_generator/link_preview_generator.dart';
-import 'package:media_info/media_info.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import '/Configs/Enum.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipic;
-import '/Configs/Dbkeys.dart';
-import '/Configs/Dbpaths.dart';
-import '/Screens/privacypolicy&TnC/PdfViewFromCachedUrl.dart';
 import '/widgets/SoundPlayer/SoundPlayerPro.dart';
-import '/Screens/call_history/callhistory.dart';
-import '/Screens/contact_screens/ContactsSelect.dart';
-import '/Models/DataModel.dart';
-import '/Screens/chat_screen/utils/photo_view.dart';
-import '/Utils/save.dart';
-import '/widgets/AudioRecorder/Audiorecord.dart';
-import '/widgets/DocumentPicker/documentPicker.dart';
+import '/widgets/VideoEditor/video_editor.dart';
 import '/widgets/VideoPicker/VideoPreview.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:giphy_get/giphy_get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
-import '/Utils/unawaited.dart';
-import 'package:video_compress/video_compress.dart' as compress;
-import 'package:path/path.dart' as p;
 
 class BroadcastChatPage extends StatefulWidget {
   final String currentUserno;
   final String broadcastID;
   final DataModel model;
   final SharedPreferences prefs;
+
   BroadcastChatPage({
     Key? key,
     required this.currentUserno,
@@ -81,19 +85,18 @@ class BroadcastChatPage extends StatefulWidget {
   _BroadcastChatPageState createState() => _BroadcastChatPageState();
 }
 
-class _BroadcastChatPageState extends State<BroadcastChatPage>
-    with WidgetsBindingObserver {
+class _BroadcastChatPageState extends State<BroadcastChatPage> with WidgetsBindingObserver {
   bool isgeneratingThumbnail = false;
 
   GlobalKey<ScaffoldState> _scaffold = new GlobalKey<ScaffoldState>();
-  GlobalKey<State> _keyLoader =
-      new GlobalKey<State>(debugLabel: 'qqqeqessaqsseaadqeqe');
+  GlobalKey<State> _keyLoader = new GlobalKey<State>(debugLabel: 'qqqeqessaqsseaadqeqe');
   final ScrollController realtime = new ScrollController();
   late Query firestoreChatquery;
   InterstitialAd? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
+
   @override
   void initState() {
     super.initState();
@@ -106,10 +109,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     setLastSeen(false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      var firestoreProvider =
-          Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
-              this.context,
-              listen: false);
+      var firestoreProvider = Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(this.context, listen: false);
 
       final observer = Provider.of<Observer>(this.context, listen: false);
       firestoreProvider.reset();
@@ -133,10 +133,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     firestoreChatquery.snapshots().listen((snapshot) {
       snapshot.docChanges.forEach((change) {
         if (change.type == DocumentChangeType.added) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(this.context, listen: false);
           DocumentSnapshot newDoc = change.doc;
           if (chatprovider.datalistSnapshot.length == 0) {
           } else if ((chatprovider.checkIfDocAlreadyExits(
@@ -148,27 +145,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
             //     duration: Duration(milliseconds: 300), curve: Curves.easeOut));
           }
         } else if (change.type == DocumentChangeType.modified) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(this.context, listen: false);
           DocumentSnapshot updatedDoc = change.doc;
-          if (chatprovider.checkIfDocAlreadyExits(
-                  newDoc: updatedDoc,
-                  timestamp: updatedDoc[Dbkeys.timestamp]) ==
-              true) {
+          if (chatprovider.checkIfDocAlreadyExits(newDoc: updatedDoc, timestamp: updatedDoc[Dbkeys.timestamp]) == true) {
             chatprovider.updateparticulardocinProvider(updatedDoc: updatedDoc);
           }
         } else if (change.type == DocumentChangeType.removed) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(this.context, listen: false);
           DocumentSnapshot deletedDoc = change.doc;
-          if (chatprovider.checkIfDocAlreadyExits(
-                  newDoc: deletedDoc,
-                  timestamp: deletedDoc[Dbkeys.timestamp]) ==
-              true) {
+          if (chatprovider.checkIfDocAlreadyExits(newDoc: deletedDoc, timestamp: deletedDoc[Dbkeys.timestamp]) == true) {
             // chatprovider.deleteparticulardocinProvider(deletedDoc: deletedDoc);
           }
         }
@@ -210,9 +195,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         imageFile = image;
       });
     }
-    return observer.isPercentProgressShowWhileUploading
-        ? uploadFileWithProgressIndicator(false)
-        : uploadFile(false);
+    return observer.isPercentProgressShowWhileUploading ? uploadFileWithProgressIndicator(false) : uploadFile(false);
   }
 
   getpickedFileName(broadcastID, timestamp) {
@@ -238,24 +221,18 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     setStateIfMounted(() {
       isgeneratingThumbnail = false;
     });
-    return observer.isPercentProgressShowWhileUploading
-        ? uploadFileWithProgressIndicator(true)
-        : uploadFile(true);
+    return observer.isPercentProgressShowWhileUploading ? uploadFileWithProgressIndicator(true) : uploadFile(true);
   }
 
   String? videometadata;
   int? uploadTimestamp;
   int? thumnailtimestamp;
+
   Future uploadFile(bool isthumbnail) async {
     uploadTimestamp = DateTime.now().millisecondsSinceEpoch;
-    String fileName = getpickedFileName(
-        widget.broadcastID,
-        isthumbnail == false
-            ? '$uploadTimestamp'
-            : '${thumnailtimestamp}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/")
-        .child(fileName);
+    String fileName =
+        getpickedFileName(widget.broadcastID, isthumbnail == false ? '$uploadTimestamp' : '${thumnailtimestamp}Thumbnail');
+    Reference reference = FirebaseStorage.instance.ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/").child(fileName);
 
     File fileToCompress;
     File? compressedImage;
@@ -264,20 +241,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
       fileToCompress = File(imageFile!.path);
       await compress.VideoCompress.setLogLevel(0);
 
-      final compress.MediaInfo? info =
-          await compress.VideoCompress.compressVideo(
+      final compress.MediaInfo? info = await compress.VideoCompress.compressVideo(
         fileToCompress.path,
-        quality: IsVideoQualityCompress == true
-            ? compress.VideoQuality.MediumQuality
-            : compress.VideoQuality.HighestQuality,
+        quality: IsVideoQualityCompress == true ? compress.VideoQuality.MediumQuality : compress.VideoQuality.HighestQuality,
         deleteOrigin: false,
         includeAudio: true,
       );
       imageFile = File(info!.path!);
     } else if (isthumbnail == false && isImage(imageFile!.path) == true) {
-      final targetPath = imageFile!.absolute.path
-              .replaceAll(basename(imageFile!.absolute.path), "") +
-          "temp.jpg";
+      final targetPath = imageFile!.absolute.path.replaceAll(basename(imageFile!.absolute.path), "") + "temp.jpg";
 
       var c = await FlutterImageCompress.compressAndGetFile(
         imageFile!.absolute.path,
@@ -325,16 +297,10 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         debugPrint('ERROR Sending File: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -344,14 +310,9 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
 
   Future uploadFileWithProgressIndicator(bool isthumbnail) async {
     uploadTimestamp = DateTime.now().millisecondsSinceEpoch;
-    String fileName = getpickedFileName(
-        widget.broadcastID,
-        isthumbnail == false
-            ? '$uploadTimestamp'
-            : '${thumnailtimestamp}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/")
-        .child(fileName);
+    String fileName =
+        getpickedFileName(widget.broadcastID, isthumbnail == false ? '$uploadTimestamp' : '${thumnailtimestamp}Thumbnail');
+    Reference reference = FirebaseStorage.instance.ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/").child(fileName);
 
     File fileToCompress;
     File? compressedImage;
@@ -360,20 +321,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
       fileToCompress = File(imageFile!.path);
       await compress.VideoCompress.setLogLevel(0);
 
-      final compress.MediaInfo? info =
-          await compress.VideoCompress.compressVideo(
+      final compress.MediaInfo? info = await compress.VideoCompress.compressVideo(
         fileToCompress.path,
-        quality: IsVideoQualityCompress == true
-            ? compress.VideoQuality.MediumQuality
-            : compress.VideoQuality.HighestQuality,
+        quality: IsVideoQualityCompress == true ? compress.VideoQuality.MediumQuality : compress.VideoQuality.HighestQuality,
         deleteOrigin: false,
         includeAudio: true,
       );
       imageFile = File(info!.path!);
     } else if (isthumbnail == false && isImage(imageFile!.path) == true) {
-      final targetPath = imageFile!.absolute.path
-              .replaceAll(basename(imageFile!.absolute.path), "") +
-          "temp.jpg";
+      final targetPath = imageFile!.absolute.path.replaceAll(basename(imageFile!.absolute.path), "") + "temp.jpg";
 
       var c = await FlutterImageCompress.compressAndGetFile(
         imageFile!.absolute.path,
@@ -402,9 +358,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                     borderRadius: BorderRadius.circular(7),
                   ),
                   key: _keyLoader,
-                  backgroundColor: Thm.isDarktheme(widget.prefs)
-                      ? storychatDIALOGColorDarkMode
-                      : storychatDIALOGColorLightMode,
+                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
                   children: <Widget>[
                     Center(
                       child: StreamBuilder(
@@ -418,8 +372,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'uploading'),
                                 subtitle:
                                     "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
@@ -430,8 +383,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                   context: context,
                                   percent: 0.0,
                                   title: isthumbnail == true
-                                      ? getTranslated(
-                                          context, 'generatingthumbnail')
+                                      ? getTranslated(context, 'generatingthumbnail')
                                       : getTranslated(context, 'uploading'),
                                   subtitle: '');
                             }
@@ -473,16 +425,10 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         debugPrint('ERROR SENDING FILE: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -507,19 +453,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         type: type,
         cachedModel: widget.model);
 
-    unawaited(realtime.animateTo(0.0,
-        duration: Duration(milliseconds: 300), curve: Curves.easeOut));
-    Fiberchat.toast(
-        '${getTranslated(context, 'senttorecp')} ${recipientList.length}');
+    unawaited(realtime.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut));
+    Fiberchat.toast('${getTranslated(context, 'senttorecp')} ${recipientList.length}');
     setStatusBarColor(widget.prefs);
     if (type == MessageType.doc ||
         type == MessageType.audio ||
         (type == MessageType.image && !content.contains('giphy')) ||
         type == MessageType.location ||
         type == MessageType.contact) {
-      if (IsVideoAdShow == true &&
-          observer.isadmobshow == true &&
-          IsInterstitialAdShow == false) {
+      if (IsVideoAdShow == true && observer.isadmobshow == true && IsInterstitialAdShow == false) {
         Future.delayed(const Duration(milliseconds: 1200), () {
           _showRewardedAd();
         });
@@ -535,8 +477,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     }
   }
 
-  Future uploadSelectedLocalFileWithProgressIndicator(
-      File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch,
+  Future uploadSelectedLocalFileWithProgressIndicator(File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch,
       {String? filenameoptional}) async {
     String ext = p.extension(selectedFile.path);
     String fileName = filenameoptional != null
@@ -548,9 +489,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                 : 'IMG-$timeEpoch$ext';
     // String fileName = getpickedFileName(widget.broadcastID,
     //     isthumbnail == false ? '$timeEpoch' : '${timeEpoch}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/")
-        .child(fileName);
+    Reference reference = FirebaseStorage.instance.ref("+00_BROADCAST_MEDIA/${widget.broadcastID}/").child(fileName);
 
     UploadTask uploading = reference.putFile(selectedFile);
 
@@ -566,9 +505,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                   ),
                   // side: BorderSide(width: 5, color: Colors.green)),
                   key: _keyLoader,
-                  backgroundColor: Thm.isDarktheme(widget.prefs)
-                      ? storychatDIALOGColorDarkMode
-                      : storychatDIALOGColorLightMode,
+                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
                   children: <Widget>[
                     Center(
                       child: StreamBuilder(
@@ -582,8 +519,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle:
                                     "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
@@ -594,8 +530,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 context: context,
                                 percent: 0.0,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle: '',
                               );
@@ -633,16 +568,10 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         debugPrint('ERROR SENDING FILE: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -680,8 +609,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
       return;
     }
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
-          debugPrint('ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (InterstitialAd ad) => debugPrint('ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
@@ -726,8 +654,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
       return;
     }
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) =>
-          debugPrint('ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (RewardedAd ad) => debugPrint('ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
@@ -748,11 +675,9 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
   _onEmojiSelected(Emoji emoji) {
     textEditingController
       ..text += emoji.emoji
-      ..selection = TextSelection.fromPosition(
-          TextPosition(offset: textEditingController.text.length));
+      ..selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
     setStateIfMounted(() {});
-    if (textEditingController.text.isNotEmpty &&
-        textEditingController.text.length == 1) {
+    if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
       setStateIfMounted(() {});
     }
     if (textEditingController.text.isEmpty) {
@@ -763,10 +688,8 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
   _onBackspacePressed() {
     textEditingController
       ..text = textEditingController.text.characters.skipLast(1).toString()
-      ..selection = TextSelection.fromPosition(
-          TextPosition(offset: textEditingController.text.length));
-    if (textEditingController.text.isNotEmpty &&
-        textEditingController.text.length == 1) {
+      ..selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
+    if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
       setStateIfMounted(() {});
     }
     if (textEditingController.text.isEmpty) {
@@ -774,440 +697,382 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     }
   }
 
-  final TextEditingController textEditingController =
-      new TextEditingController();
+  final TextEditingController textEditingController = new TextEditingController();
   FocusNode keyboardFocusNode = new FocusNode();
-  Widget buildInputAndroid(
-      BuildContext context,
-      bool isemojiShowing,
-      Function toggleEmojiKeyboard,
-      bool keyboardVisible,
+
+  Widget buildInputAndroid(BuildContext context, bool isemojiShowing, Function toggleEmojiKeyboard, bool keyboardVisible,
       List<BroadcastModel> broadcastList) {
     final observer = Provider.of<Observer>(context, listen: true);
 
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: EdgeInsets.only(bottom: Platform.isIOS == true ? 20 : 0),
-            child: Row(
-              children: <Widget>[
-                Flexible(
-                  child: Container(
-                    margin: EdgeInsets.only(
-                      left: 10,
-                    ),
-                    decoration: BoxDecoration(
-                        color: storychatWhite,
-                        borderRadius: BorderRadius.all(Radius.circular(30))),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              toggleEmojiKeyboard();
-                            },
-                            icon: Icon(
-                              Icons.emoji_emotions,
-                              size: 23,
-                              color: storychatGrey,
-                            ),
-                          ),
-                        ),
-                        Flexible(
-                          child: TextField(
-                            onTap: () {
-                              if (isemojiShowing == true) {
-                              } else {
-                                keyboardFocusNode.requestFocus();
-                                setStateIfMounted(() {});
-                              }
-                            },
-                            onChanged: (f) {
-                              if (textEditingController.text.isNotEmpty &&
-                                  textEditingController.text.length == 1) {
-                                setStateIfMounted(() {});
-                              }
-
-                              setStateIfMounted(() {});
-                            },
-                            showCursor: true,
-                            focusNode: keyboardFocusNode,
-                            maxLines: null,
-                            textCapitalization: TextCapitalization.sentences,
-                            style: TextStyle(
-                                fontSize: 16.0, color: storychatBlack),
-                            controller: textEditingController,
-                            decoration: InputDecoration(
-                              enabledBorder: OutlineInputBorder(
-                                // width: 0.0 produces a thin "hairline" border
-                                borderRadius: BorderRadius.circular(1),
-                                borderSide: BorderSide(
-                                    color: Colors.transparent, width: 1.5),
-                              ),
-                              hoverColor: Colors.transparent,
-                              focusedBorder: OutlineInputBorder(
-                                // width: 0.0 produces a thin "hairline" border
-                                borderRadius: BorderRadius.circular(1),
-                                borderSide: BorderSide(
-                                    color: Colors.transparent, width: 1.5),
-                              ),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(1),
-                                  borderSide:
-                                      BorderSide(color: Colors.transparent)),
-                              contentPadding: EdgeInsets.fromLTRB(10, 4, 7, 4),
-                              hintText: getTranslated(this.context, 'msg'),
-                              hintStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 15),
-                            ),
-                          ),
-                        ),
-                        Container(
-                            margin: EdgeInsets.fromLTRB(0, 0, 5, 0),
-                            width: textEditingController.text.isNotEmpty
-                                ? 10
-                                : IsShowGIFsenderButtonByGIPHY == false
-                                    ? 80
-                                    : 120,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                textEditingController.text.isNotEmpty
-                                    ? SizedBox()
-                                    : SizedBox(
-                                        width: 30,
-                                        child: IconButton(
-                                          icon: new Icon(
-                                            Icons.attachment_outlined,
-                                            color: storychatGrey,
-                                          ),
-                                          padding: EdgeInsets.all(0.0),
-                                          onPressed: observer
-                                                      .ismediamessagingallowed ==
-                                                  false
-                                              ? () {
-                                                  Fiberchat.showRationale(
-                                                      getTranslated(
-                                                          this.context,
-                                                          'mediamssgnotallowed'));
-                                                }
-                                              : () {
-                                                  hidekeyboard(context);
-                                                  shareMedia(
-                                                      context, broadcastList);
-                                                },
-                                          color: storychatWhite,
-                                        ),
-                                      ),
-                                textEditingController.text.isNotEmpty
-                                    ? SizedBox()
-                                    : SizedBox(
-                                        width: 30,
-                                        child: IconButton(
-                                          icon: new Icon(
-                                            Icons.camera_alt_rounded,
-                                            size: 20,
-                                            color: storychatGrey,
-                                          ),
-                                          padding: EdgeInsets.all(0.0),
-                                          onPressed:
-                                              observer.ismediamessagingallowed ==
-                                                      false
-                                                  ? () {
-                                                      Fiberchat.showRationale(
-                                                          getTranslated(
-                                                              this.context,
-                                                              'mediamssgnotallowed'));
-                                                    }
-                                                  : () async {
-                                                      hidekeyboard(context);
-                                                      await Navigator.push(
-                                                          context,
-                                                          new MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  new AllinOneCameraGalleryImageVideoPicker(
-                                                                    prefs: widget
-                                                                        .prefs,
-                                                                    onTakeFile: (file,
-                                                                        isVideo,
-                                                                        thumnail) async {
-                                                                      setStatusBarColor(
-                                                                          widget
-                                                                              .prefs);
-                                                                      int timeStamp =
-                                                                          DateTime.now()
-                                                                              .millisecondsSinceEpoch;
-                                                                      if (isVideo ==
-                                                                          true) {
-                                                                        String
-                                                                            videoFileext =
-                                                                            p.extension(file.path);
-                                                                        String
-                                                                            videofileName =
-                                                                            'Video-$timeStamp$videoFileext';
-                                                                        String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                            file,
-                                                                            true,
-                                                                            false,
-                                                                            timeStamp,
-                                                                            filenameoptional:
-                                                                                videofileName);
-                                                                        if (videoUrl !=
-                                                                            null) {
-                                                                          String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                              thumnail!,
-                                                                              false,
-                                                                              true,
-                                                                              timeStamp);
-                                                                          if (thumnailUrl !=
-                                                                              null) {
-                                                                            onSendMessage(
-                                                                                context: this.context,
-                                                                                content: videoUrl + '-BREAK-' + thumnailUrl + '-BREAK-' + videometadata! + '-BREAK-' + videofileName,
-                                                                                type: MessageType.video,
-                                                                                recipientList: broadcastList.toList().firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID).docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                                            file.delete();
-                                                                            thumnail.delete();
-                                                                          }
-                                                                        }
-                                                                      } else {
-                                                                        String
-                                                                            imageFileext =
-                                                                            p.extension(file.path);
-                                                                        String
-                                                                            imagefileName =
-                                                                            'IMG-$timeStamp$imageFileext';
-                                                                        String? url = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                            file,
-                                                                            false,
-                                                                            false,
-                                                                            timeStamp,
-                                                                            filenameoptional:
-                                                                                imagefileName);
-                                                                        if (url !=
-                                                                            null) {
-                                                                          onSendMessage(
-                                                                              context: this.context,
-                                                                              content: url,
-                                                                              type: MessageType.image,
-                                                                              recipientList: broadcastList.toList().firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID).docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                                          file.delete();
-                                                                        }
-                                                                      }
-                                                                    },
-                                                                  )));
-                                                      // hidekeyboard(context);
-
-                                                      // Navigator.push(
-                                                      //     context,
-                                                      //     MaterialPageRoute(
-                                                      //         builder: (context) =>
-                                                      //             SingleImagePicker(
-                                                      //               title: getTranslated(
-                                                      //                   this.context,
-                                                      //                   'pickimage'),
-                                                      //               callback:
-                                                      //                   getFileData,
-                                                      //             ))).then((url) {
-                                                      //   if (url != null) {
-                                                      //     onSendMessage(
-                                                      //         context: this.context,
-                                                      //         content: url,
-                                                      //         type:
-                                                      //             MessageType.image,
-                                                      //         recipientList: broadcastList
-                                                      //             .toList()
-                                                      //             .firstWhere((element) =>
-                                                      //                 element.docmap[
-                                                      //                     Dbkeys
-                                                      //                         .broadcastID] ==
-                                                      //                 widget
-                                                      //                     .broadcastID)
-                                                      //             .docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                      //   }
-                                                      // });
-                                                    },
-                                          color: storychatWhite,
-                                        ),
-                                      ),
-                                textEditingController.text.length != 0 ||
-                                        IsShowGIFsenderButtonByGIPHY == false
-                                    ? SizedBox(
-                                        width: 0,
-                                      )
-                                    : Container(
-                                        margin: EdgeInsets.only(bottom: 5),
-                                        height: 35,
-                                        alignment: Alignment.topLeft,
-                                        width: 40,
-                                        child: IconButton(
-                                            color: storychatWhite,
-                                            padding: EdgeInsets.all(0.0),
-                                            icon: Icon(
-                                              Icons.gif_rounded,
-                                              size: 40,
-                                              color: storychatGrey,
-                                            ),
-                                            onPressed: observer
-                                                        .ismediamessagingallowed ==
-                                                    false
-                                                ? () {
-                                                    Fiberchat.showRationale(
-                                                        getTranslated(
-                                                            this.context,
-                                                            'mediamssgnotallowed'));
-                                                  }
-                                                : () async {
-                                                    GiphyGif? gif =
-                                                        await GiphyGet.getGif(
-                                                      tabColor:
-                                                          storychatPRIMARYcolor,
-                                                      context: context,
-                                                      apiKey:
-                                                          GiphyAPIKey, //YOUR API KEY HERE
-                                                      lang:
-                                                          GiphyLanguage.english,
-                                                    );
-                                                    if (gif != null &&
-                                                        mounted) {
-                                                      onSendMessage(
-                                                          context: context,
-                                                          content: gif.images!
-                                                              .original!.url,
-                                                          type:
-                                                              MessageType.image,
-                                                          recipientList: broadcastList
-                                                              .toList()
-                                                              .firstWhere((element) =>
-                                                                  element.docmap[
-                                                                      Dbkeys
-                                                                          .broadcastID] ==
-                                                                  widget
-                                                                      .broadcastID)
-                                                              .docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                      hidekeyboard(context);
-                                                      setStateIfMounted(() {});
-                                                    }
-                                                  }),
-                                      ),
-                              ],
-                            ))
-                      ],
-                    ),
-                  ),
+    return Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        margin: EdgeInsets.only(bottom: Platform.isIOS == true ? 20 : 0),
+        child: Row(
+          children: <Widget>[
+            Flexible(
+              child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
                 ),
-                Container(
-                  height: 47,
-                  width: 47,
-                  margin: EdgeInsets.only(left: 6, right: 10),
-                  decoration: BoxDecoration(
-                      color: storychatSECONDARYolor,
-                      borderRadius: BorderRadius.all(Radius.circular(30))),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2.0),
-                    child: IconButton(
-                      icon: textInSendButton == ""
+                decoration: BoxDecoration(color: storychatWhite, borderRadius: BorderRadius.all(Radius.circular(30))),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: IconButton(
+                        onPressed: () {
+                          toggleEmojiKeyboard();
+                        },
+                        icon: Icon(
+                          Icons.emoji_emotions,
+                          size: 23,
+                          color: storychatGrey,
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: TextField(
+                        onTap: () {
+                          if (isemojiShowing == true) {
+                          } else {
+                            keyboardFocusNode.requestFocus();
+                            setStateIfMounted(() {});
+                          }
+                        },
+                        onChanged: (f) {
+                          if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
+                            setStateIfMounted(() {});
+                          }
+
+                          setStateIfMounted(() {});
+                        },
+                        showCursor: true,
+                        focusNode: keyboardFocusNode,
+                        maxLines: null,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: TextStyle(fontSize: 16.0, color: storychatBlack),
+                        controller: textEditingController,
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            // width: 0.0 produces a thin "hairline" border
+                            borderRadius: BorderRadius.circular(1),
+                            borderSide: BorderSide(color: Colors.transparent, width: 1.5),
+                          ),
+                          hoverColor: Colors.transparent,
+                          focusedBorder: OutlineInputBorder(
+                            // width: 0.0 produces a thin "hairline" border
+                            borderRadius: BorderRadius.circular(1),
+                            borderSide: BorderSide(color: Colors.transparent, width: 1.5),
+                          ),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(1), borderSide: BorderSide(color: Colors.transparent)),
+                          contentPadding: EdgeInsets.fromLTRB(10, 4, 7, 4),
+                          hintText: getTranslated(this.context, 'msg'),
+                          hintStyle: TextStyle(color: Colors.grey, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                    Container(
+                        margin: EdgeInsets.fromLTRB(0, 0, 5, 0),
+                        width: textEditingController.text.isNotEmpty
+                            ? 10
+                            : IsShowGIFsenderButtonByGIPHY == false
+                                ? 80
+                                : 120,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            textEditingController.text.isNotEmpty
+                                ? SizedBox()
+                                : SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      icon: new Icon(
+                                        Icons.attachment_outlined,
+                                        color: storychatGrey,
+                                      ),
+                                      padding: EdgeInsets.all(0.0),
+                                      onPressed: observer.ismediamessagingallowed == false
+                                          ? () {
+                                              Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                            }
+                                          : () {
+                                              hidekeyboard(context);
+                                              shareMedia(context, broadcastList);
+                                            },
+                                      color: storychatWhite,
+                                    ),
+                                  ),
+                            textEditingController.text.isNotEmpty
+                                ? SizedBox()
+                                : SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      icon: new Icon(
+                                        Icons.camera_alt_rounded,
+                                        size: 20,
+                                        color: storychatGrey,
+                                      ),
+                                      padding: EdgeInsets.all(0.0),
+                                      onPressed: observer.ismediamessagingallowed == false
+                                          ? () {
+                                              Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                            }
+                                          : () async {
+                                              hidekeyboard(context);
+                                              await Navigator.push(
+                                                  context,
+                                                  new MaterialPageRoute(
+                                                      builder: (context) => new AllinOneCameraGalleryImageVideoPicker(
+                                                            prefs: widget.prefs,
+                                                            onTakeFile: (file, isVideo, thumnail) async {
+                                                              setStatusBarColor(widget.prefs);
+                                                              int timeStamp = DateTime.now().millisecondsSinceEpoch;
+                                                              if (isVideo == true) {
+                                                                String videoFileext = p.extension(file.path);
+                                                                String videofileName = 'Video-$timeStamp$videoFileext';
+                                                                String? videoUrl =
+                                                                    await uploadSelectedLocalFileWithProgressIndicator(
+                                                                        file, true, false, timeStamp,
+                                                                        filenameoptional: videofileName);
+                                                                if (videoUrl != null) {
+                                                                  String? thumnailUrl =
+                                                                      await uploadSelectedLocalFileWithProgressIndicator(
+                                                                          thumnail!, false, true, timeStamp);
+                                                                  if (thumnailUrl != null) {
+                                                                    onSendMessage(
+                                                                        context: this.context,
+                                                                        content: videoUrl +
+                                                                            '-BREAK-' +
+                                                                            thumnailUrl +
+                                                                            '-BREAK-' +
+                                                                            videometadata! +
+                                                                            '-BREAK-' +
+                                                                            videofileName,
+                                                                        type: MessageType.video,
+                                                                        recipientList: broadcastList
+                                                                            .toList()
+                                                                            .firstWhere((element) =>
+                                                                                element.docmap[Dbkeys.broadcastID] ==
+                                                                                widget.broadcastID)
+                                                                            .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                                                    file.delete();
+                                                                    thumnail.delete();
+                                                                  }
+                                                                }
+                                                              } else {
+                                                                String imageFileext = p.extension(file.path);
+                                                                String imagefileName = 'IMG-$timeStamp$imageFileext';
+                                                                String? url = await uploadSelectedLocalFileWithProgressIndicator(
+                                                                    file, false, false, timeStamp,
+                                                                    filenameoptional: imagefileName);
+                                                                if (url != null) {
+                                                                  onSendMessage(
+                                                                      context: this.context,
+                                                                      content: url,
+                                                                      type: MessageType.image,
+                                                                      recipientList: broadcastList
+                                                                          .toList()
+                                                                          .firstWhere((element) =>
+                                                                              element.docmap[Dbkeys.broadcastID] ==
+                                                                              widget.broadcastID)
+                                                                          .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                                                  file.delete();
+                                                                }
+                                                              }
+                                                            },
+                                                          )));
+                                              // hidekeyboard(context);
+
+                                              // Navigator.push(
+                                              //     context,
+                                              //     MaterialPageRoute(
+                                              //         builder: (context) =>
+                                              //             SingleImagePicker(
+                                              //               title: getTranslated(
+                                              //                   this.context,
+                                              //                   'pickimage'),
+                                              //               callback:
+                                              //                   getFileData,
+                                              //             ))).then((url) {
+                                              //   if (url != null) {
+                                              //     onSendMessage(
+                                              //         context: this.context,
+                                              //         content: url,
+                                              //         type:
+                                              //             MessageType.image,
+                                              //         recipientList: broadcastList
+                                              //             .toList()
+                                              //             .firstWhere((element) =>
+                                              //                 element.docmap[
+                                              //                     Dbkeys
+                                              //                         .broadcastID] ==
+                                              //                 widget
+                                              //                     .broadcastID)
+                                              //             .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                              //   }
+                                              // });
+                                            },
+                                      color: storychatWhite,
+                                    ),
+                                  ),
+                            textEditingController.text.length != 0 || IsShowGIFsenderButtonByGIPHY == false
+                                ? SizedBox(
+                                    width: 0,
+                                  )
+                                : Container(
+                                    margin: EdgeInsets.only(bottom: 5),
+                                    height: 35,
+                                    alignment: Alignment.topLeft,
+                                    width: 40,
+                                    child: IconButton(
+                                        color: storychatWhite,
+                                        padding: EdgeInsets.all(0.0),
+                                        icon: Icon(
+                                          Icons.gif_rounded,
+                                          size: 40,
+                                          color: storychatGrey,
+                                        ),
+                                        onPressed: observer.ismediamessagingallowed == false
+                                            ? () {
+                                                Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                              }
+                                            : () async {
+                                                GiphyGif? gif = await GiphyGet.getGif(
+                                                  tabColor: storychatPRIMARYcolor,
+                                                  context: context,
+                                                  apiKey: GiphyAPIKey, //YOUR API KEY HERE
+                                                  lang: GiphyLanguage.english,
+                                                );
+                                                if (gif != null && mounted) {
+                                                  onSendMessage(
+                                                      context: context,
+                                                      content: gif.images!.original!.url,
+                                                      type: MessageType.image,
+                                                      recipientList: broadcastList
+                                                          .toList()
+                                                          .firstWhere((element) =>
+                                                              element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                                          .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                                  hidekeyboard(context);
+                                                  setStateIfMounted(() {});
+                                                }
+                                              }),
+                                  ),
+                          ],
+                        ))
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              height: 47,
+              width: 47,
+              margin: EdgeInsets.only(left: 6, right: 10),
+              decoration: BoxDecoration(color: storychatSECONDARYolor, borderRadius: BorderRadius.all(Radius.circular(30))),
+              child: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: IconButton(
+                  icon: textInSendButton == ""
+                      ? new Icon(
+                          textEditingController.text.length == 0 ? Icons.mic : Icons.send,
+                          color: storychatWhite.withOpacity(0.99),
+                        )
+                      : textEditingController.text.length == 0
                           ? new Icon(
-                              textEditingController.text.length == 0
-                                  ? Icons.mic
-                                  : Icons.send,
+                              Icons.mic,
                               color: storychatWhite.withOpacity(0.99),
                             )
-                          : textEditingController.text.length == 0
-                              ? new Icon(
-                                  Icons.mic,
-                                  color: storychatWhite.withOpacity(0.99),
-                                )
-                              : Text(
-                                  textInSendButton,
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: textInSendButton.length > 2
-                                          ? 10.7
-                                          : 17.5),
-                                ),
-                      onPressed: observer.ismediamessagingallowed == true
-                          ? textEditingController.text.isNotEmpty == false
-                              ? () {
-                                  hidekeyboard(context);
+                          : Text(
+                              textInSendButton,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: textInSendButton.length > 2 ? 10.7 : 17.5),
+                            ),
+                  onPressed: observer.ismediamessagingallowed == true
+                      ? textEditingController.text.isNotEmpty == false
+                          ? () {
+                              hidekeyboard(context);
 
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AudioRecord(
-                                                prefs: widget.prefs,
-                                                title: getTranslated(
-                                                    this.context, 'record'),
-                                                callback: getFileData,
-                                              ))).then((url) {
-                                    if (url != null) {
-                                      onSendMessage(
-                                          context: context,
-                                          content: url +
-                                              '-BREAK-' +
-                                              uploadTimestamp.toString(),
-                                          type: MessageType.audio,
-                                          recipientList: broadcastList
-                                                  .toList()
-                                                  .firstWhere((element) =>
-                                                      element.docmap[
-                                                          Dbkeys.broadcastID] ==
-                                                      widget.broadcastID)
-                                                  .docmap[
-                                              Dbkeys.broadcastMEMBERSLIST]);
-                                    } else {}
-                                  });
-                                }
-                              : observer.istextmessagingallowed == false
-                                  ? () {
-                                      Fiberchat.showRationale(getTranslated(
-                                          this.context, 'textmssgnotallowed'));
-                                    }
-                                  : () => onSendMessage(
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => AudioRecord(
+                                            prefs: widget.prefs,
+                                            title: getTranslated(this.context, 'record'),
+                                            callback: getFileData,
+                                          ))).then((url) {
+                                if (url != null) {
+                                  onSendMessage(
                                       context: context,
-                                      content: textEditingController.value.text
-                                          .trim(),
-                                      type: MessageType.text,
+                                      content: url + '-BREAK-' + uploadTimestamp.toString(),
+                                      type: MessageType.audio,
                                       recipientList: broadcastList
                                           .toList()
-                                          .firstWhere((element) =>
-                                              element
-                                                  .docmap[Dbkeys.broadcastID] ==
-                                              widget.broadcastID)
-                                          .docmap[Dbkeys.broadcastMEMBERSLIST])
-                          : () {
-                              Fiberchat.showRationale(getTranslated(
-                                  this.context, 'mediamssgnotallowed'));
-                            },
-                      color: storychatWhite,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            width: double.infinity,
-            height: 60.0,
-            decoration: new BoxDecoration(
-              // border: new Border(top: new BorderSide(color: Colors.grey, width: 0.5)),
-              color: Colors.transparent,
-            ),
-          ),
-          isemojiShowing == true && keyboardVisible == false
-              ? Offstage(
-                  offstage: !isemojiShowing,
-                  child: SizedBox(
-                    height: 300,
-                    child: EmojiPicker(
-                        onEmojiSelected:
-                            (emojipic.Category category, Emoji emoji) {
-                          _onEmojiSelected(emoji);
+                                          .firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                          .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                } else {}
+                              });
+                            }
+                          : observer.istextmessagingallowed == false
+                              ? () {
+                                  Fiberchat.showRationale(getTranslated(this.context, 'textmssgnotallowed'));
+                                }
+                              : () => onSendMessage(
+                                  context: context,
+                                  content: textEditingController.value.text.trim(),
+                                  type: MessageType.text,
+                                  recipientList: broadcastList
+                                      .toList()
+                                      .firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                      .docmap[Dbkeys.broadcastMEMBERSLIST])
+                      : () {
+                          Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
                         },
-                        onBackspacePressed: _onBackspacePressed,
-                        config: Config(
+                  color: storychatWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
+        width: double.infinity,
+        height: 60.0,
+        decoration: new BoxDecoration(
+          // border: new Border(top: new BorderSide(color: Colors.grey, width: 0.5)),
+          color: Colors.transparent,
+        ),
+      ),
+      isemojiShowing == true && keyboardVisible == false
+          ? Offstage(
+              offstage: !isemojiShowing,
+              child: SizedBox(
+                height: 300,
+                child: EmojiPicker(
+                  onEmojiSelected: (emojipic.Category? category, Emoji emoji) {
+                    _onEmojiSelected(emoji);
+                  },
+                  onBackspacePressed: _onBackspacePressed,
+                  config: Config(
+                    height: 256,
+                    checkPlatformCompatibility: true,
+                    emojiViewConfig: EmojiViewConfig(
+                        // Issue: https://github.com/flutter/flutter/issues/28894
+                        emojiSizeMax: 28 * (foundation.defaultTargetPlatform == TargetPlatform.iOS ? 1.20 : 1.0),
+                        backgroundColor: const Color(0xFFF2F2F2)),
+                    swapCategoryAndBottomBar: false,
+                    skinToneConfig: const SkinToneConfig(),
+                    categoryViewConfig: CategoryViewConfig(
+                      initCategory: emojipic.Category.RECENT,
+                      indicatorColor: storychatPRIMARYcolor,
+                      iconColor: Colors.grey,
+                      iconColorSelected: storychatPRIMARYcolor,
+                      backspaceColor: storychatPRIMARYcolor,
+                    ),
+                    bottomActionBarConfig: const BottomActionBarConfig(),
+                    searchViewConfig: const SearchViewConfig(),
+                  ),
+                  /*config: Config(
                             columns: 7,
                             emojiSizeMax: 32.0,
                             verticalSpacing: 0,
@@ -1222,28 +1087,26 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                             showRecentsTab: true,
                             recentsLimit: 28,
                             categoryIcons: CategoryIcons(),
-                            buttonMode: ButtonMode.MATERIAL)),
-                  ),
-                )
-              : SizedBox(),
-        ]);
+                            buttonMode: ButtonMode.MATERIAL),*/
+                ),
+              ),
+            )
+          : SizedBox(),
+    ]);
   }
 
   buildEachMessage(Map<String, dynamic> doc, BroadcastModel broadcastData) {
-    if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationCreatedbroadcast) {
+    if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationCreatedbroadcast) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           '${getTranslated(this.context, 'createdbroadcast')} ${doc[Dbkeys.broadcastmsgLISToptional].length} ${getTranslated(this.context, 'recipients')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationAddedUser) {
+    } else if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationAddedUser) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
@@ -1252,56 +1115,47 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
           doc[Dbkeys.broadcastmsgLISToptional].length > 1
               ? '${getTranslated(this.context, 'uhaveadded')} ${doc[Dbkeys.broadcastmsgLISToptional].length} ${getTranslated(this.context, 'recipients')}'
               : '${getTranslated(this.context, 'uhaveadded')} ${doc[Dbkeys.broadcastmsgLISToptional][0]} ',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationUpdatedbroadcastDetails) {
+    } else if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationUpdatedbroadcastDetails) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           getTranslated(this.context, 'uhaveupdatedbroadcast'),
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationUpdatedbroadcasticon) {
+    } else if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationUpdatedbroadcasticon) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           getTranslated(this.context, 'broadcasticonupdtd'),
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationDeletedbroadcasticon) {
+    } else if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationDeletedbroadcasticon) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           getTranslated(this.context, 'broadcasticondlted'),
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.broadcastmsgTYPE] ==
-        Dbkeys.broadcastmsgTYPEnotificationRemovedUser) {
+    } else if (doc[Dbkeys.broadcastmsgTYPE] == Dbkeys.broadcastmsgTYPEnotificationRemovedUser) {
       return Center(
           child: Chip(
         labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           '${getTranslated(this.context, 'youhaveremoved')} ${doc[Dbkeys.broadcastmsgLISToptional][0]}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
     } else if (doc[Dbkeys.broadcastmsgTYPE] == MessageType.image.index ||
@@ -1317,8 +1171,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     return Text(doc[Dbkeys.broadcastmsgCONTENT]);
   }
 
-  contextMenu(BuildContext context, Map<String, dynamic> doc,
-      {bool saved = false}) {
+  contextMenu(BuildContext context, Map<String, dynamic> doc, {bool saved = false}) {
     List<Widget> tiles = List.from(<Widget>[]);
 
     if (doc[Dbkeys.broadcastmsgSENDBY] == widget.currentUserno) {
@@ -1327,9 +1180,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               dense: true,
               leading: Icon(Icons.delete),
               title: Text(
-                (doc[Dbkeys.messageType] == MessageType.image.index &&
-                            !doc[Dbkeys.broadcastmsgCONTENT]
-                                .contains('giphy')) ||
+                (doc[Dbkeys.messageType] == MessageType.image.index && !doc[Dbkeys.broadcastmsgCONTENT].contains('giphy')) ||
                         (doc[Dbkeys.messageType] == MessageType.doc.index) ||
                         (doc[Dbkeys.messageType] == MessageType.audio.index) ||
                         (doc[Dbkeys.messageType] == MessageType.video.index)
@@ -1339,37 +1190,22 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               ),
               onTap: () async {
                 Navigator.of(popable).pop();
-                if (doc[Dbkeys.messageType] == MessageType.image.index &&
-                    !doc[Dbkeys.broadcastmsgCONTENT].contains('giphy')) {
+                if (doc[Dbkeys.messageType] == MessageType.image.index && !doc[Dbkeys.broadcastmsgCONTENT].contains('giphy')) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(doc[Dbkeys.broadcastmsgCONTENT])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(doc[Dbkeys.broadcastmsgCONTENT]).delete();
                   } catch (e) {}
                 } else if (doc[Dbkeys.messageType] == MessageType.doc.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0]).delete();
                   } catch (e) {}
                 } else if (doc[Dbkeys.messageType] == MessageType.audio.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0]).delete();
                   } catch (e) {}
                 } else if (doc[Dbkeys.messageType] == MessageType.video.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[1])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[0]).delete();
+                    await FirebaseStorage.instance.refFromURL(doc[Dbkeys.broadcastmsgCONTENT].split('-BREAK-')[1]).delete();
                   } catch (e) {}
                 }
 
@@ -1377,8 +1213,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                     .collection(DbPaths.collectionbroadcasts)
                     .doc(widget.broadcastID)
                     .collection(DbPaths.collectionbroadcastsChats)
-                    .doc(
-                        '${doc[Dbkeys.broadcastmsgTIME]}--${doc[Dbkeys.broadcastmsgSENDBY]}')
+                    .doc('${doc[Dbkeys.broadcastmsgTIME]}--${doc[Dbkeys.broadcastmsgSENDBY]}')
                     .delete();
                 Fiberchat.toast(getTranslated(this.context, 'deleted'));
               })));
@@ -1391,16 +1226,13 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
         });
   }
 
-  Widget buildMediaMessages(
-      Map<String, dynamic> doc, BroadcastModel broadcastData) {
+  Widget buildMediaMessages(Map<String, dynamic> doc, BroadcastModel broadcastData) {
     final observer = Provider.of<Observer>(this.context, listen: false);
     bool isMe = widget.currentUserno == doc[Dbkeys.broadcastmsgSENDBY];
     bool saved = false;
     bool isContainURL = false;
     try {
-      isContainURL = Uri.tryParse(doc[Dbkeys.content]!) == null
-          ? false
-          : Uri.tryParse(doc[Dbkeys.content]!)!.isAbsolute;
+      isContainURL = Uri.tryParse(doc[Dbkeys.content]!) == null ? false : Uri.tryParse(doc[Dbkeys.content]!)!.isAbsolute;
     } on Exception catch (_) {
       isContainURL = false;
     }
@@ -1411,40 +1243,28 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                 hidekeyboard(context);
               },
               child: GroupChatBubble(
-                isURLtext: doc[Dbkeys.messageType] == MessageType.text.index &&
-                    isContainURL == true,
+                isURLtext: doc[Dbkeys.messageType] == MessageType.text.index && isContainURL == true,
                 is24hrsFormat: observer.is24hrsTimeformat,
                 prefs: widget.prefs,
                 currentUserNo: widget.currentUserno,
                 model: widget.model,
-                savednameifavailable: contactsProvider
-                            .contactsBookContactList!.entries
+                savednameifavailable: contactsProvider.contactsBookContactList!.entries
                             .toList()
-                            .indexWhere((element) =>
-                                element.key ==
-                                doc[Dbkeys.broadcastmsgSENDBY]) >=
+                            .indexWhere((element) => element.key == doc[Dbkeys.broadcastmsgSENDBY]) >=
                         0
                     ? contactsProvider.contactsBookContactList!.entries
-                        .toList()[contactsProvider
-                            .contactsBookContactList!.entries
+                        .toList()[contactsProvider.contactsBookContactList!.entries
                             .toList()
-                            .indexWhere((element) =>
-                                element.key == doc[Dbkeys.broadcastmsgSENDBY])]
+                            .indexWhere((element) => element.key == doc[Dbkeys.broadcastmsgSENDBY])]
                         .value
                     : null,
-                postedbyname: contactsProvider
-                            .alreadyJoinedSavedUsersPhoneNameAsInServer
-                            .indexWhere((element) =>
-                                element.phone ==
-                                doc[Dbkeys.broadcastmsgSENDBY]) >=
+                postedbyname: contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                            .indexWhere((element) => element.phone == doc[Dbkeys.broadcastmsgSENDBY]) >=
                         0
                     ? contactsProvider
-                            .alreadyJoinedSavedUsersPhoneNameAsInServer[
-                                contactsProvider
-                                    .alreadyJoinedSavedUsersPhoneNameAsInServer
-                                    .indexWhere((element) =>
-                                        element.phone ==
-                                        doc[Dbkeys.broadcastmsgSENDBY])]
+                            .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider
+                                .alreadyJoinedSavedUsersPhoneNameAsInServer
+                                .indexWhere((element) => element.phone == doc[Dbkeys.broadcastmsgSENDBY])]
                             .name ??
                         ''
                     : '',
@@ -1455,20 +1275,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                         ? MessageType.text
                         : doc[Dbkeys.messageType] == MessageType.contact.index
                             ? MessageType.contact
-                            : doc[Dbkeys.messageType] ==
-                                    MessageType.location.index
+                            : doc[Dbkeys.messageType] == MessageType.location.index
                                 ? MessageType.location
-                                : doc[Dbkeys.messageType] ==
-                                        MessageType.image.index
+                                : doc[Dbkeys.messageType] == MessageType.image.index
                                     ? MessageType.image
-                                    : doc[Dbkeys.messageType] ==
-                                            MessageType.video.index
+                                    : doc[Dbkeys.messageType] == MessageType.video.index
                                         ? MessageType.video
-                                        : doc[Dbkeys.messageType] ==
-                                                MessageType.doc.index
+                                        : doc[Dbkeys.messageType] == MessageType.doc.index
                                             ? MessageType.doc
-                                            : doc[Dbkeys.messageType] ==
-                                                    MessageType.audio.index
+                                            : doc[Dbkeys.messageType] == MessageType.audio.index
                                                 ? MessageType.audio
                                                 : MessageType.text,
                 child: doc[Dbkeys.broadcastmsgISDELETED] == true
@@ -1476,26 +1291,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                     : doc[Dbkeys.messageType] == MessageType.text.index
                         ? getTextMessage(isMe, doc, saved)
                         : doc[Dbkeys.messageType] == MessageType.location.index
-                            ? getLocationMessage(doc[Dbkeys.content],
-                                saved: false)
+                            ? getLocationMessage(doc[Dbkeys.content], saved: false)
                             : doc[Dbkeys.messageType] == MessageType.doc.index
-                                ? getDocmessage(context, doc[Dbkeys.content],
-                                    saved: false)
-                                : doc[Dbkeys.messageType] ==
-                                        MessageType.audio.index
-                                    ? getAudiomessage(
-                                        context, doc[Dbkeys.content],
-                                        isMe: isMe, saved: false)
-                                    : doc[Dbkeys.messageType] ==
-                                            MessageType.video.index
-                                        ? getVideoMessage(
-                                            context, doc[Dbkeys.content],
-                                            saved: false)
-                                        : doc[Dbkeys.messageType] ==
-                                                MessageType.contact.index
-                                            ? getContactMessage(
-                                                context, doc[Dbkeys.content],
-                                                saved: false)
+                                ? getDocmessage(context, doc[Dbkeys.content], saved: false)
+                                : doc[Dbkeys.messageType] == MessageType.audio.index
+                                    ? getAudiomessage(context, doc[Dbkeys.content], isMe: isMe, saved: false)
+                                    : doc[Dbkeys.messageType] == MessageType.video.index
+                                        ? getVideoMessage(context, doc[Dbkeys.content], saved: false)
+                                        : doc[Dbkeys.messageType] == MessageType.contact.index
+                                            ? getContactMessage(context, doc[Dbkeys.content], saved: false)
                                             : getImageMessage(
                                                 doc,
                                                 saved: saved,
@@ -1508,10 +1312,8 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
             ));
   }
 
-  Widget getVideoMessage(BuildContext context, String message,
-      {bool saved = false}) {
-    Map<dynamic, dynamic>? meta =
-        jsonDecode((message.split('-BREAK-')[2]).toString());
+  Widget getVideoMessage(BuildContext context, String message, {bool saved = false}) {
+    Map<dynamic, dynamic>? meta = jsonDecode((message.split('-BREAK-')[2]).toString());
     return Container(
       child: InkWell(
         onTap: () {
@@ -1536,8 +1338,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               CachedNetworkImage(
                 placeholder: (context, url) => Container(
                   child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
                   ),
                   width: 230.0,
                   height: 230.0,
@@ -1572,8 +1373,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                 height: 230.0,
               ),
               Center(
-                child: Icon(Icons.play_circle_fill_outlined,
-                    color: Colors.white70, size: 65),
+                child: Icon(Icons.play_circle_fill_outlined, color: Colors.white70, size: 65),
               ),
             ],
           ),
@@ -1582,8 +1382,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     );
   }
 
-  Widget getContactMessage(BuildContext context, String message,
-      {bool saved = false}) {
+  Widget getContactMessage(BuildContext context, String message, {bool saved = false}) {
     return SizedBox(
       width: 210,
       height: 75,
@@ -1596,19 +1395,13 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               message.split('-BREAK-')[0],
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: TextStyle(
-                  height: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.blue[400]),
+              style: TextStyle(height: 1.4, fontWeight: FontWeight.w700, color: Colors.blue[400]),
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 3),
               child: Text(
                 message.split('-BREAK-')[1],
-                style: TextStyle(
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87),
+                style: TextStyle(height: 1.4, fontWeight: FontWeight.w500, color: Colors.black87),
               ),
             ),
           ),
@@ -1618,11 +1411,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
   }
 
   Widget getTextMessage(bool isMe, Map<String, dynamic> doc, bool saved) {
-    return selectablelinkify(
-        doc[Dbkeys.broadcastmsgISDELETED] == true
-            ? 'Message is deleted'
-            : doc[Dbkeys.content],
-        15.5,
+    return selectablelinkify(doc[Dbkeys.broadcastmsgISDELETED] == true ? 'Message is deleted' : doc[Dbkeys.content], 15.5,
         isMe ? TextAlign.right : TextAlign.left);
   }
 
@@ -1639,8 +1428,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     );
   }
 
-  Widget getAudiomessage(BuildContext context, String message,
-      {bool saved = false, bool isMe = true}) {
+  Widget getAudiomessage(BuildContext context, String message, {bool saved = false, bool isMe = true}) {
     return Container(
       margin: EdgeInsets.only(bottom: 10),
       child: Column(
@@ -1655,8 +1443,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                     prefs: widget.prefs,
                     keyloader: _keyLoader,
                     url: message.split('-BREAK-')[0],
-                    fileName:
-                        'Recording_' + message.split('-BREAK-')[1] + '.mp3',
+                    fileName: 'Recording_' + message.split('-BREAK-')[1] + '.mp3',
                     context: this.context,
                     isOpenAfterDownload: true);
               },
@@ -1668,8 +1455,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
     );
   }
 
-  Widget getDocmessage(BuildContext context, String message,
-      {bool saved = false}) {
+  Widget getDocmessage(BuildContext context, String message, {bool saved = false}) {
     return SizedBox(
       width: 220,
       height: 116,
@@ -1694,10 +1480,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               message.split('-BREAK-')[1],
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
-              style: TextStyle(
-                  height: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87),
+              style: TextStyle(height: 1.4, fontWeight: FontWeight.w700, color: Colors.black87),
             ),
           ),
           Divider(
@@ -1726,9 +1509,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                           );
                         },
                         child: Text(getTranslated(this.context, 'preview'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.blue[400]))),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                     ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
@@ -1744,9 +1525,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                               isOpenAfterDownload: true);
                         },
                         child: Text(getTranslated(this.context, 'download'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.blue[400]))),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                   ],
                 )
               : ElevatedButton(
@@ -1764,9 +1543,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                         isOpenAfterDownload: true);
                   },
                   child: Text(getTranslated(this.context, 'download'),
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.blue[400]))),
+                      style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
         ],
       ),
     );
@@ -1778,9 +1555,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
           ? Material(
               child: Container(
                 decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: Save.getImageFromBase64(doc[Dbkeys.content]).image,
-                      fit: BoxFit.cover),
+                  image: DecorationImage(image: Save.getImageFromBase64(doc[Dbkeys.content]).image, fit: BoxFit.cover),
                 ),
                 width: doc[Dbkeys.content].contains('giphy') ? 140 : 230.0,
                 height: doc[Dbkeys.content].contains('giphy') ? 140 : 230.0,
@@ -1806,8 +1581,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
               child: CachedNetworkImage(
                 placeholder: (context, url) => Container(
                   child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
                   ),
                   width: doc[Dbkeys.content].contains('giphy') ? 140 : 230.0,
                   height: doc[Dbkeys.content].contains('giphy') ? 140 : 230.0,
@@ -1858,33 +1632,27 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
 
   Widget buildMessagesUsingProvider(BuildContext context) {
     return Consumer<List<BroadcastModel>>(
-        builder: (context, broadcastList, _child) =>
-            Consumer<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
-                builder: (context, firestoreDataProvider, _) =>
-                    InfiniteCOLLECTIONListViewWidget(
-                      prefs: widget.prefs,
-                      scrollController: realtime,
-                      isreverse: true,
-                      firestoreDataProviderMESSAGESforBROADCASTCHATPAGE:
-                          firestoreDataProvider,
-                      datatype: Dbkeys.datatypeBROADCASTCMSGS,
-                      refdata: firestoreChatquery,
-                      list: ListView.builder(
-                          reverse: true,
-                          padding: EdgeInsets.all(0),
-                          physics: BouncingScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: firestoreDataProvider.recievedDocs.length,
-                          itemBuilder: (BuildContext context, int i) {
-                            var dc = firestoreDataProvider.recievedDocs[i];
+        builder: (context, broadcastList, _child) => Consumer<FirestoreDataProviderMESSAGESforBROADCASTCHATPAGE>(
+            builder: (context, firestoreDataProvider, _) => InfiniteCOLLECTIONListViewWidget(
+                  prefs: widget.prefs,
+                  scrollController: realtime,
+                  isreverse: true,
+                  firestoreDataProviderMESSAGESforBROADCASTCHATPAGE: firestoreDataProvider,
+                  datatype: Dbkeys.datatypeBROADCASTCMSGS,
+                  refdata: firestoreChatquery,
+                  list: ListView.builder(
+                      reverse: true,
+                      padding: EdgeInsets.all(0),
+                      physics: BouncingScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: firestoreDataProvider.recievedDocs.length,
+                      itemBuilder: (BuildContext context, int i) {
+                        var dc = firestoreDataProvider.recievedDocs[i];
 
-                            return buildEachMessage(
-                                dc,
-                                broadcastList.lastWhere((element) =>
-                                    element.docmap[Dbkeys.groupID] ==
-                                    widget.broadcastID));
-                          }),
-                    )));
+                        return buildEachMessage(
+                            dc, broadcastList.lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.broadcastID));
+                      }),
+                )));
   }
 
   Widget buildLoadingThumbnail() {
@@ -1892,14 +1660,10 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
       child: isgeneratingThumbnail
           ? Container(
               child: Center(
-                child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(storychatSECONDARYolor)),
+                child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor)),
               ),
               color: pickTextColorBasedOnBgColorAdvanced(
-                      !Thm.isDarktheme(widget.prefs)
-                          ? storychatCONTAINERboxColorDarkMode
-                          : storychatCONTAINERboxColorLightMode)
+                      !Thm.isDarktheme(widget.prefs) ? storychatCONTAINERboxColorDarkMode : storychatCONTAINERboxColorLightMode)
                   .withOpacity(0.6),
             )
           : Container(),
@@ -1910,9 +1674,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
 
   shareMedia(BuildContext context, List<BroadcastModel> broadcastList) {
     showModalBottomSheet(
-        backgroundColor: Thm.isDarktheme(widget.prefs)
-            ? storychatDIALOGColorDarkMode
-            : storychatDIALOGColorLightMode,
+        backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
         context: context,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
@@ -1946,8 +1708,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 MaterialPageRoute(
                                     builder: (context) => HybridDocumentPicker(
                                           prefs: widget.prefs,
-                                          title: getTranslated(
-                                              this.context, 'pickdoc'),
+                                          title: getTranslated(this.context, 'pickdoc'),
                                           callback: getFileData,
                                         ))).then((url) async {
                               if (url != null) {
@@ -1957,16 +1718,11 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
 
                                 onSendMessage(
                                     context: this.context,
-                                    content: url +
-                                        '-BREAK-' +
-                                        basename(imageFile!.path).toString(),
+                                    content: url + '-BREAK-' + basename(imageFile!.path).toString(),
                                     type: MessageType.doc,
                                     recipientList: broadcastList
                                         .toList()
-                                        .firstWhere((element) =>
-                                            element
-                                                .docmap[Dbkeys.broadcastID] ==
-                                            widget.broadcastID)
+                                        .firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
                                         .docmap[Dbkeys.broadcastMEMBERSLIST]);
                                 // Fiberchat.toast(
                                 //     getTranslated(this.context, 'sent'));
@@ -2007,11 +1763,8 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                           onPressed: () async {
                             hidekeyboard(context);
                             Navigator.of(context).pop();
-                            File? selectedMedia =
-                                await pickVideoFromgallery(context)
-                                    .catchError((err) {
-                              Fiberchat.toast(
-                                  getTranslated(context, "invalidfile"));
+                            File? selectedMedia = await pickVideoFromgallery(context).catchError((err) {
+                              Fiberchat.toast(getTranslated(context, "invalidfile"));
                               return null;
                             });
 
@@ -2019,17 +1772,12 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                               setStatusBarColor(widget.prefs);
                             } else {
                               setStatusBarColor(widget.prefs);
-                              String fileExtension =
-                                  p.extension(selectedMedia.path).toLowerCase();
+                              String fileExtension = p.extension(selectedMedia.path).toLowerCase();
 
-                              if (fileExtension == ".mp4" ||
-                                  fileExtension == ".mov") {
+                              if (fileExtension == ".mp4" || fileExtension == ".mov") {
                                 final tempDir = await getTemporaryDirectory();
-                                File file = await File(
-                                        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp4')
-                                    .create();
-                                file.writeAsBytesSync(
-                                    selectedMedia.readAsBytesSync());
+                                File file = await File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp4').create();
+                                file.writeAsBytesSync(selectedMedia.readAsBytesSync());
 
                                 await Navigator.push(
                                     this.context,
@@ -2042,31 +1790,17 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                             thumbnailQuality: 90,
                                             videoQuality: 100,
                                             maxDuration: 1900,
-                                            onEditExported: (videoFile,
-                                                thumnailFile) async {
-                                              int timeStamp = DateTime.now()
-                                                  .millisecondsSinceEpoch;
-                                              String videoFileext =
-                                                  p.extension(file.path);
-                                              String videofileName =
-                                                  'Video-$timeStamp$videoFileext';
-                                              String? videoUrl =
-                                                  await uploadSelectedLocalFileWithProgressIndicator(
-                                                      file,
-                                                      true,
-                                                      false,
-                                                      timeStamp,
-                                                      filenameoptional:
-                                                          videofileName);
+                                            onEditExported: (videoFile, thumnailFile) async {
+                                              int timeStamp = DateTime.now().millisecondsSinceEpoch;
+                                              String videoFileext = p.extension(file.path);
+                                              String videofileName = 'Video-$timeStamp$videoFileext';
+                                              String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                  file, true, false, timeStamp,
+                                                  filenameoptional: videofileName);
                                               if (videoUrl != null) {
-                                                String? thumnailUrl =
-                                                    await uploadSelectedLocalFileWithProgressIndicator(
-                                                        thumnailFile,
-                                                        false,
-                                                        true,
-                                                        timeStamp,
-                                                        filenameoptional:
-                                                            videofileName);
+                                                String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                    thumnailFile, false, true, timeStamp,
+                                                    filenameoptional: videofileName);
                                                 if (thumnailUrl != null) {
                                                   onSendMessage(
                                                       context: context,
@@ -2081,13 +1815,9 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                                       recipientList: broadcastList
                                                           .toList()
                                                           .firstWhere((element) =>
-                                                              element.docmap[Dbkeys
-                                                                  .broadcastID] ==
-                                                              widget
-                                                                  .broadcastID)
+                                                              element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
                                                           .docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                  Fiberchat.toast(getTranslated(
-                                                      this.context, 'sent'));
+                                                  Fiberchat.toast(getTranslated(this.context, 'sent'));
                                                   file.delete();
                                                   thumnailFile.delete();
                                                 }
@@ -2138,38 +1868,28 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                             await Navigator.push(
                                 context,
                                 new MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            new CameraImageGalleryPicker(
-                                              onTakeFile: (file) async {
-                                                setStatusBarColor(widget.prefs);
+                                    builder: (context) => new CameraImageGalleryPicker(
+                                          onTakeFile: (file) async {
+                                            setStatusBarColor(widget.prefs);
 
-                                                int timeStamp = DateTime.now()
-                                                    .millisecondsSinceEpoch;
+                                            int timeStamp = DateTime.now().millisecondsSinceEpoch;
 
-                                                String? url =
-                                                    await uploadSelectedLocalFileWithProgressIndicator(
-                                                        file,
-                                                        false,
-                                                        false,
-                                                        timeStamp);
-                                                if (url != null) {
-                                                  onSendMessage(
-                                                      context: this.context,
-                                                      content: url,
-                                                      type: MessageType.image,
-                                                      recipientList: broadcastList
-                                                          .toList()
-                                                          .firstWhere((element) =>
-                                                              element.docmap[Dbkeys
-                                                                  .broadcastID] ==
-                                                              widget
-                                                                  .broadcastID)
-                                                          .docmap[Dbkeys.broadcastMEMBERSLIST]);
-                                                  file.delete();
-                                                }
-                                              },
-                                            )));
+                                            String? url =
+                                                await uploadSelectedLocalFileWithProgressIndicator(file, false, false, timeStamp);
+                                            if (url != null) {
+                                              onSendMessage(
+                                                  context: this.context,
+                                                  content: url,
+                                                  type: MessageType.image,
+                                                  recipientList: broadcastList
+                                                      .toList()
+                                                      .firstWhere(
+                                                          (element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                                      .docmap[Dbkeys.broadcastMEMBERSLIST]);
+                                              file.delete();
+                                            }
+                                          },
+                                        )));
                           },
                           elevation: .5,
                           fillColor: Colors.purple,
@@ -2220,23 +1940,17 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 MaterialPageRoute(
                                     builder: (context) => AudioRecord(
                                           prefs: widget.prefs,
-                                          title: getTranslated(
-                                              this.context, 'record'),
+                                          title: getTranslated(this.context, 'record'),
                                           callback: getFileData,
                                         ))).then((url) {
                               if (url != null) {
                                 onSendMessage(
                                     context: context,
-                                    content: url +
-                                        '-BREAK-' +
-                                        uploadTimestamp.toString(),
+                                    content: url + '-BREAK-' + uploadTimestamp.toString(),
                                     type: MessageType.audio,
                                     recipientList: broadcastList
                                         .toList()
-                                        .firstWhere((element) =>
-                                            element
-                                                .docmap[Dbkeys.broadcastID] ==
-                                            widget.broadcastID)
+                                        .firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
                                         .docmap[Dbkeys.broadcastMEMBERSLIST]);
                               } else {}
                             });
@@ -2278,8 +1992,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
 
                             await checkIfLocationEnabled().then((value) async {
                               if (value == true) {
-                                Fiberchat.toast(getTranslated(
-                                    this.context, 'detectingloc'));
+                                Fiberchat.toast(getTranslated(this.context, 'detectingloc'));
                                 await _determinePosition().then(
                                   (location) async {
                                     var locationstring =
@@ -2289,13 +2002,9 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                         content: locationstring,
                                         type: MessageType.location,
                                         recipientList: broadcastList
-                                                .toList()
-                                                .firstWhere((element) =>
-                                                    element.docmap[
-                                                        Dbkeys.broadcastID] ==
-                                                    widget.broadcastID)
-                                                .docmap[
-                                            Dbkeys.broadcastMEMBERSLIST]);
+                                            .toList()
+                                            .firstWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                            .docmap[Dbkeys.broadcastMEMBERSLIST]);
                                     setStateIfMounted(() {});
                                     Fiberchat.toast(
                                       getTranslated(this.context, 'sent'),
@@ -2303,8 +2012,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                   },
                                 );
                               } else {
-                                Fiberchat.toast(getTranslated(
-                                    this.context, 'locationdenied'));
+                                Fiberchat.toast(getTranslated(this.context, 'locationdenied'));
                                 openAppSettings();
                               }
                             });
@@ -2357,13 +2065,10 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                               content: '$name-BREAK-$phone',
                                               type: MessageType.contact,
                                               recipientList: broadcastList
-                                                      .toList()
-                                                      .firstWhere((element) =>
-                                                          element.docmap[Dbkeys
-                                                              .broadcastID] ==
-                                                          widget.broadcastID)
-                                                      .docmap[
-                                                  Dbkeys.broadcastMEMBERSLIST]);
+                                                  .toList()
+                                                  .firstWhere(
+                                                      (element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                                  .docmap[Dbkeys.broadcastMEMBERSLIST]);
                                         })));
                           },
                           elevation: .5,
@@ -2397,6 +2102,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
   }
 
   bool isemojiShowing = false;
+
   Future<bool> onWillPop() {
     if (isemojiShowing == true) {
       setState(() {
@@ -2452,9 +2158,8 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                     children: [
                       Scaffold(
                           key: _scaffold,
-                          backgroundColor: Thm.isDarktheme(widget.prefs)
-                              ? storychatCHATBACKGROUNDDarkMode
-                              : storychatCHATBACKGROUNDLightMode,
+                          backgroundColor:
+                              Thm.isDarktheme(widget.prefs) ? storychatCHATBACKGROUNDDarkMode : storychatCHATBACKGROUNDLightMode,
                           appBar: AppBar(
                             elevation: 0.4,
                             titleSpacing: 0,
@@ -2465,17 +2170,15 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 icon: Icon(
                                   Icons.arrow_back,
                                   size: 24,
-                                  color: pickTextColorBasedOnBgColorAdvanced(
-                                      Thm.isDarktheme(widget.prefs)
-                                          ? storychatAPPBARcolorDarkMode
-                                          : storychatAPPBARcolorLightMode),
+                                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                      ? storychatAPPBARcolorDarkMode
+                                      : storychatAPPBARcolorLightMode),
                                 ),
                                 onPressed: onWillPop,
                               ),
                             ),
-                            backgroundColor: Thm.isDarktheme(widget.prefs)
-                                ? storychatAPPBARcolorDarkMode
-                                : storychatAPPBARcolorLightMode,
+                            backgroundColor:
+                                Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
                             title: InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -2491,37 +2194,27 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Padding(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(0, 7, 0, 7),
+                                      padding: const EdgeInsets.fromLTRB(0, 7, 0, 7),
                                       child: customCircleAvatarBroadcast(
                                           radius: 20,
                                           url: broadcastList
-                                                  .lastWhere((element) =>
-                                                      element.docmap[
-                                                          Dbkeys.broadcastID] ==
-                                                      widget.broadcastID)
-                                                  .docmap[
-                                              Dbkeys.broadcastPHOTOURL])),
+                                              .lastWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                              .docmap[Dbkeys.broadcastPHOTOURL])),
                                   SizedBox(
                                     width: 7,
                                   ),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           broadcastList
-                                              .lastWhere((element) =>
-                                                  element.docmap[
-                                                      Dbkeys.broadcastID] ==
-                                                  widget.broadcastID)
+                                              .lastWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
                                               .docmap[Dbkeys.broadcastNAME],
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                              color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                      .isDarktheme(widget.prefs)
+                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                   ? storychatAPPBARcolorDarkMode
                                                   : storychatAPPBARcolorLightMode),
                                               fontSize: 17.0,
@@ -2531,19 +2224,13 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                                           height: 6,
                                         ),
                                         SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width /
-                                              1.3,
+                                          width: MediaQuery.of(context).size.width / 1.3,
                                           child: Text(
-                                            getTranslated(this.context,
-                                                'tapforbroadcastinfo'),
+                                            getTranslated(this.context, 'tapforbroadcastinfo'),
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
                                             style: TextStyle(
-                                                color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                            .isDarktheme(
-                                                                widget.prefs)
+                                                color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                         ? storychatAPPBARcolorDarkMode
                                                         : storychatAPPBARcolorLightMode)
                                                     .withOpacity(0.9),
@@ -2562,59 +2249,39 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                             new Container(
                               decoration: new BoxDecoration(
                                 color: pickTextColorBasedOnBgColorAdvanced(
-                                    Thm.isDarktheme(widget.prefs)
-                                        ? storychatAPPBARcolorDarkMode
-                                        : storychatAPPBARcolorLightMode),
+                                    Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
                                 image: new DecorationImage(
-                                    image: AssetImage(Thm.isDarktheme(
-                                            widget.prefs)
+                                    image: AssetImage(Thm.isDarktheme(widget.prefs)
                                         ? "assets/images/background_dark.png"
                                         : "assets/images/background_light.png"),
                                     fit: BoxFit.cover),
                               ),
                             ),
                             PageView(children: <Widget>[
-                              Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Expanded(
-                                        child: buildMessagesUsingProvider(
-                                            context)),
-                                    broadcastList
-                                                .lastWhere((element) =>
-                                                    element.docmap[
-                                                        Dbkeys.broadcastID] ==
-                                                    widget.broadcastID)
-                                                .docmap[
-                                                    Dbkeys.broadcastMEMBERSLIST]
-                                                .length >
-                                            0
-                                        // ? Platform.isAndroid
-                                        ? buildInputAndroid(
-                                            context,
-                                            isemojiShowing,
-                                            refreshInput,
-                                            _keyboardVisible,
-                                            broadcastList)
-                                        // : buildInputIos(
-                                        //     context, broadcastList)
-                                        : Container(
-                                            alignment: Alignment.center,
-                                            padding: EdgeInsets.fromLTRB(
-                                                14, 7, 14, 7),
-                                            color: Colors.white,
-                                            height: 70,
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            child: Text(
-                                              getTranslated(
-                                                  this.context, 'norecp'),
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(height: 1.3),
-                                            ),
-                                          ),
-                                  ])
+                              Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                                Expanded(child: buildMessagesUsingProvider(context)),
+                                broadcastList
+                                            .lastWhere((element) => element.docmap[Dbkeys.broadcastID] == widget.broadcastID)
+                                            .docmap[Dbkeys.broadcastMEMBERSLIST]
+                                            .length >
+                                        0
+                                    // ? Platform.isAndroid
+                                    ? buildInputAndroid(context, isemojiShowing, refreshInput, _keyboardVisible, broadcastList)
+                                    // : buildInputIos(
+                                    //     context, broadcastList)
+                                    : Container(
+                                        alignment: Alignment.center,
+                                        padding: EdgeInsets.fromLTRB(14, 7, 14, 7),
+                                        color: Colors.white,
+                                        height: 70,
+                                        width: MediaQuery.of(context).size.width,
+                                        child: Text(
+                                          getTranslated(this.context, 'norecp'),
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(height: 1.3),
+                                        ),
+                                      ),
+                              ])
                             ]),
                           ])),
                       buildLoadingThumbnail(),
@@ -2623,20 +2290,16 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
                 ))));
   }
 
-  Widget selectablelinkify(
-      String? text, double? fontsize, TextAlign? textalign) {
+  Widget selectablelinkify(String? text, double? fontsize, TextAlign? textalign) {
     bool isContainURL = false;
     try {
-      isContainURL =
-          Uri.tryParse(text!) == null ? false : Uri.tryParse(text)!.isAbsolute;
+      isContainURL = Uri.tryParse(text!) == null ? false : Uri.tryParse(text)!.isAbsolute;
     } on Exception catch (_) {
       isContainURL = false;
     }
     return isContainURL == false
         ? SelectableLinkify(
-            style: TextStyle(
-                fontSize: isAllEmoji(text!) ? fontsize! * 2 : fontsize,
-                color: Colors.black87),
+            style: TextStyle(fontSize: isAllEmoji(text!) ? fontsize! * 2 : fontsize, color: Colors.black87),
             text: text,
             onOpen: (link) async {
               custom_url_launcher(link.url);
@@ -2647,8 +2310,7 @@ class _BroadcastChatPageState extends State<BroadcastChatPage>
             graphicFit: BoxFit.contain,
             borderRadius: 5,
             showDomain: true,
-            titleStyle: TextStyle(
-                fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
+            titleStyle: TextStyle(fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
             showBody: true,
             bodyStyle: TextStyle(fontSize: 11.6, color: Colors.black45),
             placeholderWidget: SelectableLinkify(

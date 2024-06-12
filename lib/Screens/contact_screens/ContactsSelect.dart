@@ -1,23 +1,24 @@
 //*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
 
-import 'package:contacts_service/contacts_service.dart';
-import '/Configs/Dbkeys.dart';
-import '/Configs/app_constants.dart';
-import '/Screens/calling_screen/pickup_layout.dart';
-import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
-import '/Services/localization/language_constants.dart';
-import '/Models/DataModel.dart';
-import '/Utils/color_detector.dart';
-import '/Utils/open_settings.dart';
-import '/Utils/theme_management.dart';
-import '/Utils/utils.dart';
-import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:localstorage/localstorage.dart';
+
+import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '/Configs/Dbkeys.dart';
+import '/Configs/app_constants.dart';
+import '/Models/DataModel.dart';
+import '/Screens/calling_screen/pickup_layout.dart';
+import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
+import '/Services/localization/language_constants.dart';
+import '/Utils/color_detector.dart';
+import '/Utils/open_settings.dart';
+import '/Utils/theme_management.dart';
+import '/Utils/utils.dart';
 
 class ContactsSelect extends StatefulWidget {
   const ContactsSelect({
@@ -27,6 +28,7 @@ class ContactsSelect extends StatefulWidget {
     required this.prefs,
     required this.onSelect,
   });
+
   final String? currentUserNo;
   final DataModel? model;
   final SharedPreferences prefs;
@@ -37,8 +39,7 @@ class ContactsSelect extends StatefulWidget {
   _ContactsSelectState createState() => new _ContactsSelectState();
 }
 
-class _ContactsSelectState extends State<ContactsSelect>
-    with AutomaticKeepAliveClientMixin {
+class _ContactsSelectState extends State<ContactsSelect> with AutomaticKeepAliveClientMixin {
   Map<String?, String?>? contacts;
   Map<String?, String?> _filtered = new Map<String, String>();
 
@@ -74,9 +75,7 @@ class _ContactsSelectState extends State<ContactsSelect>
         style: TextStyle(
           fontSize: 18,
           color: pickTextColorBasedOnBgColorAdvanced(
-              Thm.isDarktheme(widget.prefs)
-                  ? storychatAPPBARcolorDarkMode
-                  : storychatAPPBARcolorLightMode),
+              Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
         ),
       );
     });
@@ -92,15 +91,13 @@ class _ContactsSelectState extends State<ContactsSelect>
 
   _isHidden(String? phoneNo) {
     Map<String, dynamic> _currentUser = widget.model!.currentUser!;
-    return _currentUser[Dbkeys.hidden] != null &&
-        _currentUser[Dbkeys.hidden].contains(phoneNo);
+    return _currentUser[Dbkeys.hidden] != null && _currentUser[Dbkeys.hidden].contains(phoneNo);
   }
 
   Future<Map<String?, String?>> getContacts({bool refresh = false}) async {
-    Completer<Map<String?, String?>> completer =
-        new Completer<Map<String?, String?>>();
+    Completer<Map<String?, String?>> completer = new Completer<Map<String?, String?>>();
 
-    LocalStorage storage = LocalStorage(Dbkeys.cachedContacts);
+    // LocalStorage storage = LocalStorage(Dbkeys.cachedContacts);
 
     Map<String?, String?> _cachedContacts = {};
 
@@ -115,41 +112,40 @@ class _ContactsSelectState extends State<ContactsSelect>
 
     Fiberchat.checkAndRequestPermission(Permission.contacts).then((res) {
       if (res) {
-        storage.ready.then((ready) async {
-          if (ready) {
-            String? getNormalizedNumber(String? number) {
-              if (number == null) return null;
-              return number.replaceAll(new RegExp('[^0-9+]'), '');
-            }
+        // storage.ready.then((ready) async {
+        //   if (ready) {
+        String? getNormalizedNumber(String? number) {
+          if (number == null) return null;
+          return number.replaceAll(new RegExp('[^0-9+]'), '');
+        }
 
-            ContactsService.getContacts(withThumbnails: false)
-                .then((Iterable<Contact> contacts) async {
-              contacts.where((c) => c.phones!.isNotEmpty).forEach((Contact p) {
-                if (p.displayName != null && p.phones!.isNotEmpty) {
-                  List<String?> numbers = p.phones!
-                      .map((number) {
-                        String? _phone = getNormalizedNumber(number.value);
+        ContactsService.getContacts(withThumbnails: false).then((Iterable<Contact> contacts) async {
+          contacts.where((c) => c.phones!.isNotEmpty).forEach((Contact p) {
+            if (p.displayName != null && p.phones!.isNotEmpty) {
+              List<String?> numbers = p.phones!
+                  .map((number) {
+                    String? _phone = getNormalizedNumber(number.value);
 
-                        return _phone;
-                      })
-                      .toList()
-                      .where((s) => s != null)
-                      .toList();
+                    return _phone;
+                  })
+                  .toList()
+                  .where((s) => s != null)
+                  .toList();
 
-                  numbers.forEach((number) {
-                    _cachedContacts[number] = p.displayName;
-                    setState(() {});
-                  });
-                  setState(() {});
-                }
+              numbers.forEach((number) {
+                _cachedContacts[number] = p.displayName;
+                setState(() {});
               });
+              setState(() {});
+            }
+          });
 
-              // await storage.setItem(Dbkeys.cachedContacts, _cachedContacts);
-              completer.complete(_cachedContacts);
-            });
-          }
-          // }
+          // await storage.setItem(Dbkeys.cachedContacts, _cachedContacts);
+          completer.complete(_cachedContacts);
         });
+        // }
+        // }
+        // });
       } else {
         Fiberchat.showRationale(getTranslated(context, 'perm_contact'));
         Navigator.pushReplacement(
@@ -177,13 +173,11 @@ class _ContactsSelectState extends State<ContactsSelect>
         prefs: widget.prefs,
         scaffold: Fiberchat.getNTPWrappedWidget(ScopedModel<DataModel>(
             model: widget.model!,
-            child: ScopedModelDescendant<DataModel>(
-                builder: (context, child, model) {
+            child: ScopedModelDescendant<DataModel>(builder: (context, child, model) {
               return Consumer<SmartContactProviderWithLocalStoreData>(
                   builder: (context, contactsProvider, _child) => Scaffold(
-                      backgroundColor: Thm.isDarktheme(widget.prefs)
-                          ? storychatBACKGROUNDcolorDarkMode
-                          : storychatBACKGROUNDcolorLightMode,
+                      backgroundColor:
+                          Thm.isDarktheme(widget.prefs) ? storychatBACKGROUNDcolorDarkMode : storychatBACKGROUNDcolorLightMode,
                       appBar: AppBar(
                         elevation: 0.4,
                         leading: IconButton(
@@ -194,14 +188,11 @@ class _ContactsSelectState extends State<ContactsSelect>
                             Icons.keyboard_arrow_left,
                             size: 30,
                             color: pickTextColorBasedOnBgColorAdvanced(
-                                Thm.isDarktheme(widget.prefs)
-                                    ? storychatAPPBARcolorDarkMode
-                                    : storychatAPPBARcolorLightMode),
+                                Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
                           ),
                         ),
-                        backgroundColor: Thm.isDarktheme(widget.prefs)
-                            ? storychatAPPBARcolorDarkMode
-                            : storychatAPPBARcolorLightMode,
+                        backgroundColor:
+                            Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
                         centerTitle: false,
                         title: _appBarTitle,
                         actions: <Widget>[
@@ -220,15 +211,9 @@ class _ContactsSelectState extends State<ContactsSelect>
                               child: _filtered.isEmpty
                                   ? ListView(children: [
                                       Padding(
-                                          padding: EdgeInsets.only(
-                                              top: MediaQuery.of(context)
-                                                      .size
-                                                      .height /
-                                                  2.5),
+                                          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height / 2.5),
                                           child: Center(
-                                            child: Text(
-                                                getTranslated(
-                                                    context, 'nosearchresult'),
+                                            child: Text(getTranslated(context, 'nosearchresult'),
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                   fontSize: 18,
@@ -240,85 +225,52 @@ class _ContactsSelectState extends State<ContactsSelect>
                                       padding: EdgeInsets.all(10),
                                       itemCount: _filtered.length,
                                       itemBuilder: (context, idx) {
-                                        MapEntry user =
-                                            _filtered.entries.elementAt(idx);
+                                        MapEntry user = _filtered.entries.elementAt(idx);
                                         String phone = user.key;
                                         return FutureBuilder<LocalUserData?>(
-                                            future: contactsProvider
-                                                .fetchUserDataFromnLocalOrServer(
-                                                    widget.prefs, phone),
-                                            builder: (BuildContext context,
-                                                AsyncSnapshot<LocalUserData?>
-                                                    snapshot) {
-                                              if (snapshot.hasData &&
-                                                  snapshot.data != null) {
+                                            future: contactsProvider.fetchUserDataFromnLocalOrServer(widget.prefs, phone),
+                                            builder: (BuildContext context, AsyncSnapshot<LocalUserData?> snapshot) {
+                                              if (snapshot.hasData && snapshot.data != null) {
                                                 var userDoc = snapshot.data!;
                                                 return ListTile(
                                                   leading: CircleAvatar(
-                                                      backgroundColor:
-                                                          storychatSECONDARYolor,
+                                                      backgroundColor: storychatSECONDARYolor,
                                                       radius: 22.5,
                                                       child: Text(
-                                                        Fiberchat.getInitials(
-                                                            userDoc.name),
-                                                        style: TextStyle(
-                                                            color:
-                                                                storychatWhite),
+                                                        Fiberchat.getInitials(userDoc.name),
+                                                        style: TextStyle(color: storychatWhite),
                                                       )),
                                                   title: Text(userDoc.name,
                                                       style: TextStyle(
-                                                          color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                                  .isDarktheme(
-                                                                      widget
-                                                                          .prefs)
+                                                          color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                               ? storychatBACKGROUNDcolorDarkMode
                                                               : storychatBACKGROUNDcolorLightMode))),
-                                                  subtitle: Text(phone,
-                                                      style: TextStyle(
-                                                          color:
-                                                              storychatGrey)),
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 10.0,
-                                                          vertical: 0.0),
+                                                  subtitle: Text(phone, style: TextStyle(color: storychatGrey)),
+                                                  contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 0.0),
                                                   onTap: () {
                                                     Navigator.of(context).pop();
-                                                    widget.onSelect(
-                                                        user.value, phone);
+                                                    widget.onSelect(user.value, phone);
                                                   },
                                                 );
                                               }
                                               return ListTile(
                                                 leading: CircleAvatar(
-                                                    backgroundColor:
-                                                        storychatSECONDARYolor,
+                                                    backgroundColor: storychatSECONDARYolor,
                                                     radius: 22.5,
                                                     child: Text(
-                                                      Fiberchat.getInitials(
-                                                          user.value),
-                                                      style: TextStyle(
-                                                          color:
-                                                              storychatWhite),
+                                                      Fiberchat.getInitials(user.value),
+                                                      style: TextStyle(color: storychatWhite),
                                                     )),
                                                 title: Text(user.value,
                                                     style: TextStyle(
-                                                        color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                                .isDarktheme(
-                                                                    widget
-                                                                        .prefs)
+                                                        color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                             ? storychatBACKGROUNDcolorDarkMode
                                                             : storychatBACKGROUNDcolorLightMode))),
-                                                subtitle: Text(phone,
-                                                    style: TextStyle(
-                                                        color: storychatGrey)),
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 10.0,
-                                                        vertical: 0.0),
+                                                subtitle: Text(phone, style: TextStyle(color: storychatGrey)),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 0.0),
                                                 onTap: () {
                                                   Navigator.of(context).pop();
-                                                  widget.onSelect(
-                                                      user.value, phone);
+                                                  widget.onSelect(user.value, phone);
                                                 },
                                               );
                                             });

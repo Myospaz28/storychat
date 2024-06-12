@@ -5,10 +5,11 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipic;
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -222,7 +223,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool hasPeerBlockedMe = false;
 
   listenToBlock() {
-    chatStatusSubscriptionForPeer = FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.peerNo).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).snapshots().listen((doc) {
+    chatStatusSubscriptionForPeer = FirebaseFirestore.instance
+        .collection(DbPaths.collectionusers)
+        .doc(widget.peerNo)
+        .collection(Dbkeys.chatsWith)
+        .doc(Dbkeys.chatsWith)
+        .snapshots()
+        .listen((doc) {
       if (doc.data() != null && doc.data()!.containsKey(widget.currentUserNo)) {
         if (doc.data()![widget.currentUserNo] == 0) {
           hasPeerBlockedMe = true;
@@ -423,7 +430,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void setIsActive() async {
-    await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).set({'$currentUserNo': true, '$currentUserNo-lastOnline': DateTime.now().millisecondsSinceEpoch}, SetOptions(merge: true));
+    await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).set(
+        {'$currentUserNo': true, '$currentUserNo-lastOnline': DateTime.now().millisecondsSinceEpoch}, SetOptions(merge: true));
   }
 
   dynamic lastSeen;
@@ -437,7 +445,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   ) async {
     try {
       privateKey = await storage.read(key: Dbkeys.privateKey);
-      sharedSecret = (await e2ee.X25519().calculateSharedSecret(e2ee.Key.fromBase64(privateKey!, false), e2ee.Key.fromBase64(peer![Dbkeys.publicKey], true))).toBase64();
+      sharedSecret = (await e2ee
+              .X25519()
+              .calculateSharedSecret(e2ee.Key.fromBase64(privateKey!, false), e2ee.Key.fromBase64(peer![Dbkeys.publicKey], true)))
+          .toBase64();
 
       final key = encrypt.Key.fromBase64(sharedSecret!);
       cryptor = new encrypt.Encrypter(encrypt.Salsa20(key));
@@ -483,7 +494,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           }
           if (doc.data()!.containsKey("${peerNo!}-lastOnline")) {
             int lastOnline = doc.data()!["${peerNo!}-lastOnline"];
-            if (doc.data()!["${peerNo!}"] == true && DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(lastOnline)).inMinutes > 20) {
+            if (doc.data()!["${peerNo!}"] == true &&
+                DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(lastOnline)).inMinutes > 20) {
               doc.reference.update({"${peerNo!}": lastOnline});
             }
           }
@@ -532,7 +544,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       isgeneratingSomethingLoader = true;
     });
 
-    String? path = await VideoThumbnail.thumbnailFile(video: url, thumbnailPath: (await getTemporaryDirectory()).path, imageFormat: ImageFormat.PNG, quality: 30);
+    String? path = await VideoThumbnail.thumbnailFile(
+        video: url, thumbnailPath: (await getTemporaryDirectory()).path, imageFormat: ImageFormat.PNG, quality: 30);
 
     thumbnailFile = File(path!);
 
@@ -660,15 +673,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 prefs: widget.prefs,
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
-                                title: isthumbnail == true ? getTranslated(context, 'generatingthumbnail') : getTranslated(context, 'sending'),
-                                subtitle: "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
+                                title: isthumbnail == true
+                                    ? getTranslated(context, 'generatingthumbnail')
+                                    : getTranslated(context, 'sending'),
+                                subtitle:
+                                    "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
                               );
                             } else {
                               return openUploadDialog(
                                 prefs: widget.prefs,
                                 context: context,
                                 percent: 0.0,
-                                title: isthumbnail == true ? getTranslated(context, 'generatingthumbnail') : getTranslated(context, 'sending'),
+                                title: isthumbnail == true
+                                    ? getTranslated(context, 'generatingthumbnail')
+                                    : getTranslated(context, 'sending'),
                                 subtitle: '',
                               );
                             }
@@ -764,7 +782,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         final encrypted = AESEncryptData.encryptAES(content, sharedSecret);
 
         if (encrypted is String) {
-          Future messaging = FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('$timestamp').set({
+          Future messaging = FirebaseFirestore.instance
+              .collection(DbPaths.collectionmessages)
+              .doc(chatId)
+              .collection(chatId!)
+              .doc('$timestamp')
+              .set({
             Dbkeys.isMuted: isPeerMuted,
             Dbkeys.from: currentUserNo,
             Dbkeys.to: peerNo,
@@ -851,7 +874,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
           unawaited(realtime.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut));
 
-          if (type == MessageType.doc || type == MessageType.audio || type == MessageType.location || type == MessageType.contact && widget.isSharingIntentForwarded == false) {
+          if (type == MessageType.doc ||
+              type == MessageType.audio ||
+              type == MessageType.location ||
+              type == MessageType.contact && widget.isSharingIntentForwarded == false) {
             if (IsVideoAdShow == true && observer.isadmobshow == true && IsInterstitialAdShow == false) {
               Future.delayed(const Duration(milliseconds: 800), () {
                 _showRewardedAd();
@@ -894,7 +920,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       var onLongPress = () {};
       if (i >= 0) {
         messages.removeWhere((msg) => msg.timestamp == ts);
-        messages.insert(i, Message(child, timestamp: timestamp, from: from, onTap: () {}, onDoubleTap: onDoubleTap, onDismiss: onDismiss, onLongPress: onLongPress));
+        messages.insert(
+            i,
+            Message(child,
+                timestamp: timestamp,
+                from: from,
+                onTap: () {},
+                onDoubleTap: onDoubleTap,
+                onDismiss: onDismiss,
+                onLongPress: onLongPress));
       }
       messages = List.from(messages);
     });
@@ -913,21 +947,33 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
                 hidekeyboard(popable);
                 Navigator.of(popable).pop();
 
-                await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${mssgDoc[Dbkeys.timestamp]}').get().then((chatDoc) async {
+                await FirebaseFirestore.instance
+                    .collection(DbPaths.collectionmessages)
+                    .doc(chatId)
+                    .collection(chatId!)
+                    .doc('${mssgDoc[Dbkeys.timestamp]}')
+                    .get()
+                    .then((chatDoc) async {
                   if (!chatDoc.exists) {
                     Fiberchat.toast('Please reload this screen !');
                   } else if (chatDoc.exists) {
                     Map<String, dynamic> realtimeDoc = chatDoc.data()!;
                     if (realtimeDoc[Dbkeys.hasRecipientDeleted] == true) {
                       if ((mssgDoc.containsKey(Dbkeys.isbroadcast) == true ? mssgDoc[Dbkeys.isbroadcast] : false) == true) {
-                        await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').delete();
+                        await FirebaseFirestore.instance
+                            .collection(DbPaths.collectionmessages)
+                            .doc(chatId)
+                            .collection(chatId!)
+                            .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                            .delete();
                         delete(realtimeDoc[Dbkeys.timestamp]);
                         Save.deleteMessage(peerNo, realtimeDoc);
                         _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -939,7 +985,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           if (isDeleted == false || isDeleted == null) {
                             Fiberchat.toast('Could not delete. Please try again!');
                           } else {
-                            await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').delete();
+                            await FirebaseFirestore.instance
+                                .collection(DbPaths.collectionmessages)
+                                .doc(chatId)
+                                .collection(chatId!)
+                                .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                                .delete();
                             delete(realtimeDoc[Dbkeys.timestamp]);
                             Save.deleteMessage(peerNo, realtimeDoc);
                             _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -950,7 +1001,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         });
                       }
                     } else {
-                      FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').set({Dbkeys.hasSenderDeleted: true}, SetOptions(merge: true));
+                      FirebaseFirestore.instance
+                          .collection(DbPaths.collectionmessages)
+                          .doc(chatId)
+                          .collection(chatId!)
+                          .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                          .set({Dbkeys.hasSenderDeleted: true}, SetOptions(merge: true));
 
                       Save.deleteMessage(peerNo, mssgDoc);
                       _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -977,14 +1033,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
                 hidekeyboard(popable);
                 Navigator.of(popable).pop();
                 if ((mssgDoc.containsKey(Dbkeys.isbroadcast) == true ? mssgDoc[Dbkeys.isbroadcast] : false) == true) {
-                  await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${mssgDoc[Dbkeys.timestamp]}').delete();
+                  await FirebaseFirestore.instance
+                      .collection(DbPaths.collectionmessages)
+                      .doc(chatId)
+                      .collection(chatId!)
+                      .doc('${mssgDoc[Dbkeys.timestamp]}')
+                      .delete();
                   delete(mssgDoc[Dbkeys.timestamp]);
                   Save.deleteMessage(peerNo, mssgDoc);
                   _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -996,7 +1058,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     if (isDeleted == false || isDeleted == null) {
                       Fiberchat.toast('Could not delete. Please try again!');
                     } else {
-                      await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${mssgDoc[Dbkeys.timestamp]}').delete();
+                      await FirebaseFirestore.instance
+                          .collection(DbPaths.collectionmessages)
+                          .doc(chatId)
+                          .collection(chatId!)
+                          .doc('${mssgDoc[Dbkeys.timestamp]}')
+                          .delete();
                       delete(mssgDoc[Dbkeys.timestamp]);
                       Save.deleteMessage(peerNo, mssgDoc);
                       _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -1019,20 +1086,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
                 hidekeyboard(popable);
                 Navigator.of(popable).pop();
-                await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${mssgDoc[Dbkeys.timestamp]}').get().then((chatDoc) async {
+                await FirebaseFirestore.instance
+                    .collection(DbPaths.collectionmessages)
+                    .doc(chatId)
+                    .collection(chatId!)
+                    .doc('${mssgDoc[Dbkeys.timestamp]}')
+                    .get()
+                    .then((chatDoc) async {
                   if (!chatDoc.exists) {
                     Fiberchat.toast('Please reload this screen !');
                   } else if (chatDoc.exists) {
                     Map<String, dynamic> realtimeDoc = chatDoc.data()!;
                     if (realtimeDoc[Dbkeys.hasSenderDeleted] == true) {
                       if ((mssgDoc.containsKey(Dbkeys.isbroadcast) == true ? mssgDoc[Dbkeys.isbroadcast] : false) == true) {
-                        await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').delete();
+                        await FirebaseFirestore.instance
+                            .collection(DbPaths.collectionmessages)
+                            .doc(chatId)
+                            .collection(chatId!)
+                            .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                            .delete();
                         delete(realtimeDoc[Dbkeys.timestamp]);
                         Save.deleteMessage(peerNo, realtimeDoc);
                         _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -1044,7 +1123,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           if (isDeleted == false || isDeleted == null) {
                             Fiberchat.toast('Could not delete. Please try again!');
                           } else {
-                            await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').delete();
+                            await FirebaseFirestore.instance
+                                .collection(DbPaths.collectionmessages)
+                                .doc(chatId)
+                                .collection(chatId!)
+                                .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                                .delete();
                             delete(realtimeDoc[Dbkeys.timestamp]);
                             Save.deleteMessage(peerNo, realtimeDoc);
                             _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -1055,7 +1139,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         });
                       }
                     } else {
-                      FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${realtimeDoc[Dbkeys.timestamp]}').set({Dbkeys.hasRecipientDeleted: true}, SetOptions(merge: true));
+                      FirebaseFirestore.instance
+                          .collection(DbPaths.collectionmessages)
+                          .doc(chatId)
+                          .collection(chatId!)
+                          .doc('${realtimeDoc[Dbkeys.timestamp]}')
+                          .set({Dbkeys.hasRecipientDeleted: true}, SetOptions(merge: true));
 
                       Save.deleteMessage(peerNo, mssgDoc);
                       _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == mssgDoc[Dbkeys.timestamp]);
@@ -1084,7 +1173,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () {
@@ -1112,7 +1202,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () {
@@ -1122,7 +1213,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 Navigator.of(popable).pop();
               })));
     }
-    if (((mssgDoc[Dbkeys.from] == currentUserNo && mssgDoc[Dbkeys.hasSenderDeleted] == false) || (mssgDoc[Dbkeys.to] == currentUserNo && mssgDoc[Dbkeys.hasRecipientDeleted] == false)) == true) {
+    if (((mssgDoc[Dbkeys.from] == currentUserNo && mssgDoc[Dbkeys.hasSenderDeleted] == false) ||
+            (mssgDoc[Dbkeys.to] == currentUserNo && mssgDoc[Dbkeys.hasRecipientDeleted] == false)) ==
+        true) {
       tiles.add(Builder(
           builder: (BuildContext popable) => ListTile(
               dense: true,
@@ -1132,7 +1225,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
@@ -1167,7 +1261,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
@@ -1181,7 +1276,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               })));
     }
 
-    if (mssgDoc[Dbkeys.messageType] == MessageType.text.index && GoogleTransalteAPIkey != '' && GoogleTransalteAPIkey != 'PASTE_GOOGLE_TRANSLATE_API_KEY') {
+    if (mssgDoc[Dbkeys.messageType] == MessageType.text.index &&
+        GoogleTransalteAPIkey != '' &&
+        GoogleTransalteAPIkey != 'PASTE_GOOGLE_TRANSLATE_API_KEY') {
       tiles.add(Builder(
           builder: (BuildContext popable) => ListTile(
               dense: true,
@@ -1204,7 +1301,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       messages.removeWhere((element) => element.timestamp == mssgDoc[Dbkeys.timestamp]);
                       setStateIfMounted(() {});
                       Future.delayed(const Duration(milliseconds: 100), () {
-                        messages.insert(i, Message(buildMessage(this.context, mssgDoc), timestamp: m.timestamp, from: m.from, onTap: m.onTap, onDoubleTap: m.onDoubleTap, onDismiss: m.onDismiss, onLongPress: m.onLongPress));
+                        messages.insert(
+                            i,
+                            Message(buildMessage(this.context, mssgDoc),
+                                timestamp: m.timestamp,
+                                from: m.from,
+                                onTap: m.onTap,
+                                onDoubleTap: m.onDoubleTap,
+                                onDismiss: m.onDismiss,
+                                onLongPress: m.onLongPress));
                         setStateIfMounted(() {});
                         hidekeyboard(this.context);
                       });
@@ -1216,7 +1321,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               })));
     }
 
-    if (mssgDoc[Dbkeys.messageType] == MessageType.text.index && Language.languageList().length > 1 && GoogleTransalteAPIkey != '' && GoogleTransalteAPIkey != 'PASTE_GOOGLE_TRANSLATE_API_KEY') {
+    if (mssgDoc[Dbkeys.messageType] == MessageType.text.index &&
+        Language.languageList().length > 1 &&
+        GoogleTransalteAPIkey != '' &&
+        GoogleTransalteAPIkey != 'PASTE_GOOGLE_TRANSLATE_API_KEY') {
       tiles.add(Builder(
           builder: (BuildContext popable) => ListTile(
               dense: true,
@@ -1245,14 +1353,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Text(
-                                        IsShowLanguageNameInNativeLanguage == true ? e.flag + ' ' + '    ' + e.name : e.flag + ' ' + '    ' + e.languageNameInEnglish,
-                                        style: TextStyle(color: Thm.isDarktheme(widget.prefs) ? storychatWhite : storychatBlack, fontWeight: FontWeight.w500, fontSize: 16),
+                                        IsShowLanguageNameInNativeLanguage == true
+                                            ? e.flag + ' ' + '    ' + e.name
+                                            : e.flag + ' ' + '    ' + e.languageNameInEnglish,
+                                        style: TextStyle(
+                                            color: Thm.isDarktheme(widget.prefs) ? storychatWhite : storychatBlack,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16),
                                       ),
                                       Language.languageList().length < 2
                                           ? SizedBox()
                                           : Icon(
                                               Icons.done,
-                                              color: e.languageCode == widget.prefs.getString(LAGUAGE_CODE) ? storychatSECONDARYolor : Colors.transparent,
+                                              color: e.languageCode == widget.prefs.getString(LAGUAGE_CODE)
+                                                  ? storychatSECONDARYolor
+                                                  : Colors.transparent,
                                             )
                                     ],
                                   ),
@@ -1271,7 +1386,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
         context: contextForDialog,
         builder: (contextForDialog) {
-          return SimpleDialog(backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode, children: tiles);
+          return SimpleDialog(
+              backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+              children: tiles);
         });
   }
 
@@ -1287,7 +1404,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           Map<dynamic, dynamic> groupDoc = list[index];
           int timestamp = DateTime.now().millisecondsSinceEpoch;
 
-          FirebaseFirestore.instance.collection(DbPaths.collectiongroups).doc(groupDoc[Dbkeys.groupID]).collection(DbPaths.collectiongroupChats).doc(timestamp.toString() + '--' + widget.currentUserNo!).set({
+          FirebaseFirestore.instance
+              .collection(DbPaths.collectiongroups)
+              .doc(groupDoc[Dbkeys.groupID])
+              .collection(DbPaths.collectiongroupChats)
+              .doc(timestamp.toString() + '--' + widget.currentUserNo!)
+              .set({
             Dbkeys.groupmsgCONTENT: mssgDoc[Dbkeys.content],
             Dbkeys.groupmsgISDELETED: false,
             Dbkeys.groupmsgLISToptional: [],
@@ -1329,7 +1451,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         }
       } else {
         try {
-          String? sharedSecret = (await e2ee.X25519().calculateSharedSecret(e2ee.Key.fromBase64(privateKey, false), e2ee.Key.fromBase64(list[index][Dbkeys.publicKey], true))).toBase64();
+          String? sharedSecret = (await e2ee.X25519().calculateSharedSecret(
+                  e2ee.Key.fromBase64(privateKey, false), e2ee.Key.fromBase64(list[index][Dbkeys.publicKey], true)))
+              .toBase64();
           final key = encrypt.Key.fromBase64(sharedSecret);
           cryptor = new encrypt.Encrypter(encrypt.Salsa20(key));
           String content = mssgDoc[Dbkeys.content];
@@ -1342,19 +1466,44 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             if (content.trim() != '') {
               Map<String, dynamic>? targetPeer = widget.model.userData[list[index][Dbkeys.username]];
               if (targetPeer == null) {
-                await ChatController.request(currentUserNo, list[index][Dbkeys.username], Fiberchat.getChatId(widget.currentUserNo!, list[index][Dbkeys.username]));
+                await ChatController.request(currentUserNo, list[index][Dbkeys.username],
+                    Fiberchat.getChatId(widget.currentUserNo!, list[index][Dbkeys.username]));
               }
 
               await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).set({
                 widget.currentUserNo!: true,
                 list[index][Dbkeys.username]: list[index][Dbkeys.lastSeen],
               }, SetOptions(merge: true)).then((value) async {
-                Future messaging = FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(list[index][Dbkeys.username]).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).set({
+                Future messaging = FirebaseFirestore.instance
+                    .collection(DbPaths.collectionusers)
+                    .doc(list[index][Dbkeys.username])
+                    .collection(Dbkeys.chatsWith)
+                    .doc(Dbkeys.chatsWith)
+                    .set({
                   widget.currentUserNo!: 4,
                 }, SetOptions(merge: true));
                 await widget.model.addMessage(list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
-                Future messaging = FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId).doc('$timestamp2').set({Dbkeys.isMuted: isPeerMuted, Dbkeys.latestEncrypted: true, Dbkeys.from: widget.currentUserNo!, Dbkeys.to: list[index][Dbkeys.username], Dbkeys.timestamp: timestamp2, Dbkeys.content: encrypted, Dbkeys.messageType: mssgDoc[Dbkeys.messageType], Dbkeys.hasSenderDeleted: false, Dbkeys.hasRecipientDeleted: false, Dbkeys.sendername: widget.model.currentUser![Dbkeys.nickname], Dbkeys.isReply: false, Dbkeys.replyToMsgDoc: null, Dbkeys.isForward: true}, SetOptions(merge: true));
+                Future messaging = FirebaseFirestore.instance
+                    .collection(DbPaths.collectionmessages)
+                    .doc(chatId)
+                    .collection(chatId)
+                    .doc('$timestamp2')
+                    .set({
+                  Dbkeys.isMuted: isPeerMuted,
+                  Dbkeys.latestEncrypted: true,
+                  Dbkeys.from: widget.currentUserNo!,
+                  Dbkeys.to: list[index][Dbkeys.username],
+                  Dbkeys.timestamp: timestamp2,
+                  Dbkeys.content: encrypted,
+                  Dbkeys.messageType: mssgDoc[Dbkeys.messageType],
+                  Dbkeys.hasSenderDeleted: false,
+                  Dbkeys.hasRecipientDeleted: false,
+                  Dbkeys.sendername: widget.model.currentUser![Dbkeys.nickname],
+                  Dbkeys.isReply: false,
+                  Dbkeys.replyToMsgDoc: null,
+                  Dbkeys.isForward: true
+                }, SetOptions(merge: true));
                 await widget.model.addMessage(list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
                 if (index >= list.length - 1) {
@@ -1398,11 +1547,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+              color: pickTextColorBasedOnBgColorAdvanced(
+                  Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
             ),
           ),
           onTap: () async {
-            await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).doc('${doc[Dbkeys.timestamp]}').update({Dbkeys.hasRecipientDeleted: true});
+            await FirebaseFirestore.instance
+                .collection(DbPaths.collectionmessages)
+                .doc(chatId)
+                .collection(chatId!)
+                .doc('${doc[Dbkeys.timestamp]}')
+                .update({Dbkeys.hasRecipientDeleted: true});
             Save.deleteMessage(peerNo, doc);
             _savedMessageDocs.removeWhere((msg) => msg[Dbkeys.timestamp] == doc[Dbkeys.timestamp]);
             setStateIfMounted(() {
@@ -1419,7 +1574,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
 
     if (doc[Dbkeys.messageType] == MessageType.text.index) {
-      tiles.add(ListTile(
+      tiles.add(
+        ListTile(
           dense: true,
           leading: Icon(Icons.content_copy),
           title: Text(
@@ -1427,7 +1583,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+              color: pickTextColorBasedOnBgColorAdvanced(
+                  Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
             ),
           ),
           onTap: () {
@@ -1441,12 +1598,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
     }
     if (doc.containsKey(Dbkeys.broadcastID) && doc[Dbkeys.to] == widget.currentUserNo) {
-      tiles.add(ListTile(
+      tiles.add(
+        ListTile(
           dense: true,
           leading: Icon(Icons.block),
           title: Text(
             getTranslated(this.context, 'blockbroadcast'),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode)),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: pickTextColorBasedOnBgColorAdvanced(
+                    Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode)),
           ),
           onTap: () {
             Fiberchat.toast(
@@ -1475,9 +1637,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
     }
     showDialog(
-        context: context,
-        builder: (context) {
-          return SimpleDialog(backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode, children: tiles);
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+            backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+            children: tiles);
       },
     );
   }
@@ -1489,7 +1653,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (!_savedMessageDocs.any((_doc) => _doc[Dbkeys.timestamp] == doc[Dbkeys.timestamp])) {
       String? content;
       if (doc[Dbkeys.messageType] == MessageType.image.index) {
-        content = doc[Dbkeys.content].toString().startsWith('http') ? await Save.getBase64FromImage(imageUrl: doc[Dbkeys.content] as String?) : doc[Dbkeys.content];
+        content = doc[Dbkeys.content].toString().startsWith('http')
+            ? await Save.getBase64FromImage(imageUrl: doc[Dbkeys.content] as String?)
+            : doc[Dbkeys.content];
       } else {
         content = doc[Dbkeys.content];
       }
@@ -1521,28 +1687,33 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             text: text,
             onOpen: (link) async {
-                custom_url_launcher(link.url);
-              },
-            ),
-            listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns')) < 0
-              ? widget.prefs.getString('$timestamp-trns') == null || widget.prefs.getString('$timestamp-trns') == text.trim().toLowerCase()
+              custom_url_launcher(link.url);
+            },
+          ),
+          listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns')) < 0
+              ? widget.prefs.getString('$timestamp-trns') == null ||
+                      widget.prefs.getString('$timestamp-trns') == text.trim().toLowerCase()
                   ? SizedBox()
                   : Padding(
-                        padding: EdgeInsets.all(7),
-                        child: Text(
-                          widget.prefs.getString('$timestamp-trns') ?? "",
+                      padding: EdgeInsets.all(7),
+                      child: Text(
+                        widget.prefs.getString('$timestamp-trns') ?? "",
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: storychatGrey,
                         ),
                       ),
                     )
-              : listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]['$timestamp-trns'].toString().toLowerCase() == text.trim().toLowerCase()
+              : listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]['$timestamp-trns']
+                          .toString()
+                          .toLowerCase() ==
+                      text.trim().toLowerCase()
                   ? SizedBox()
                   : Padding(
-                        padding: EdgeInsets.all(7),
-                        child: Text(
-                          listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]['$timestamp-trns'],
+                      padding: EdgeInsets.all(7),
+                      child: Text(
+                        listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]
+                            ['$timestamp-trns'],
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: storychatGrey,
@@ -1554,29 +1725,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     } else {
       return LinkPreviewGenerator(
         removeElevation: true,
-            graphicFit: BoxFit.contain,
-            borderRadius: 5,
-            showDomain: true,
-            titleStyle: TextStyle(fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
-            showBody: true,
-            bodyStyle: TextStyle(fontSize: 11.6, color: Colors.black45),
-            placeholderWidget: SelectableLinkify(
-              style: TextStyle(fontSize: fontsize, color: Colors.black87),
-              text: text!,
-              onOpen: (link) async {
-                custom_url_launcher(link.url);
-              },
-            ),
-            errorWidget: SelectableLinkify(
-              style: TextStyle(fontSize: fontsize, color: Colors.black87),
-              text: text,
-              onOpen: (link) async {
-                custom_url_launcher(link.url);
-              },
-            ),
-            link: text,
-            linkPreviewStyle: LinkPreviewStyle.large,
-          );
+        graphicFit: BoxFit.contain,
+        borderRadius: 5,
+        showDomain: true,
+        titleStyle: TextStyle(fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
+        showBody: true,
+        bodyStyle: TextStyle(fontSize: 11.6, color: Colors.black45),
+        placeholderWidget: SelectableLinkify(
+          style: TextStyle(fontSize: fontsize, color: Colors.black87),
+          text: text!,
+          onOpen: (link) async {
+            custom_url_launcher(link.url);
+          },
+        ),
+        errorWidget: SelectableLinkify(
+          style: TextStyle(fontSize: fontsize, color: Colors.black87),
+          text: text,
+          onOpen: (link) async {
+            custom_url_launcher(link.url);
+          },
+        ),
+        link: text,
+        linkPreviewStyle: LinkPreviewStyle.large,
+      );
     }
   }
 
@@ -1592,8 +1763,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   SizedBox(
                     height: 10,
                   ),
-                  selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white
-                  ),
+                  selectablelinkify(
+                      doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white),
                 ],
               )
             : doc.containsKey(Dbkeys.isForward) == true
@@ -1604,25 +1775,37 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                              child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                            Icon(
-                              FontAwesomeIcons.share,
-                              size: 12,
-                              color: storychatGrey.withOpacity(0.5),
-                            ),
-                            SizedBox(
-                              width: 5,
-                            ),
-                            Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                          ])),
+                              child: Row(
+                                  mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                Icon(
+                                  FontAwesomeIcons.share,
+                                  size: 12,
+                                  color: storychatGrey.withOpacity(0.5),
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Text(getTranslated(this.context, 'forwarded'),
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                        color: storychatGrey.withOpacity(0.7),
+                                        fontStyle: FontStyle.italic,
+                                        overflow: TextOverflow.ellipsis,
+                                        fontSize: 13))
+                              ])),
                           SizedBox(
                             height: 10,
                           ),
-                          selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white),
+                          selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16,
+                              isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white),
                         ],
                       )
-                    : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
-                : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
+                    : selectablelinkify(
+                        doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
+                : selectablelinkify(
+                    doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
         : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white);
   }
 
@@ -1653,21 +1836,31 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                              child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                            Icon(
-                              FontAwesomeIcons.share,
-                              size: 12,
-                              color: storychatGrey.withOpacity(0.5),
-                            ),
-                            SizedBox(
-                              width: 5,
-                            ),
-                            Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                          ])),
+                              child: Row(
+                                  mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                Icon(
+                                  FontAwesomeIcons.share,
+                                  size: 12,
+                                  color: storychatGrey.withOpacity(0.5),
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Text(getTranslated(this.context, 'forwarded'),
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                        color: storychatGrey.withOpacity(0.7),
+                                        fontStyle: FontStyle.italic,
+                                        overflow: TextOverflow.ellipsis,
+                                        fontSize: 13))
+                              ])),
                           SizedBox(
                             height: 10,
                           ),
-                          selectablelinkify(message, doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
+                          selectablelinkify(
+                              message, doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
                         ],
                       )
                     : selectablelinkify(message, doc[Dbkeys.timestamp], 16, isMe ? Color.fromRGBO(77, 88, 164, 1) : Colors.white)
@@ -1689,17 +1882,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                        child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                      Icon(
-                        FontAwesomeIcons.share,
-                        size: 12,
-                        color: storychatGrey.withOpacity(0.5),
-                      ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                    ])),
+                        child: Row(
+                            mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                          Icon(
+                            FontAwesomeIcons.share,
+                            size: 12,
+                            color: storychatGrey.withOpacity(0.5),
+                          ),
+                          SizedBox(
+                            width: 5,
+                          ),
+                          Text(getTranslated(this.context, 'forwarded'),
+                              maxLines: 1,
+                              style: TextStyle(
+                                  color: storychatGrey.withOpacity(0.7),
+                                  fontStyle: FontStyle.italic,
+                                  overflow: TextOverflow.ellipsis,
+                                  fontSize: 13))
+                        ])),
                     SizedBox(
                       height: 10,
                     ),
@@ -1727,17 +1929,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ? doc[Dbkeys.isForward] == true
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
-                      child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          FontAwesomeIcons.share,
-                          size: 12,
-                          color: storychatGrey.withOpacity(0.5),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                      ]))
+                      child: Row(
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.share,
+                              size: 12,
+                              color: storychatGrey.withOpacity(0.5),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            Text(getTranslated(this.context, 'forwarded'),
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: storychatGrey.withOpacity(0.7),
+                                    fontStyle: FontStyle.italic,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 13))
+                          ]))
                   : SizedBox(height: 0, width: 0)
               : SizedBox(height: 0, width: 0),
           SizedBox(
@@ -1746,7 +1957,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             child: MultiPlayback(
               isMe: isMe,
               onTapDownloadFn: () async {
-                await MobileDownloadService().download(prefs: widget.prefs, keyloader: _keyLoader34, url: message.split('-BREAK-')[0], fileName: 'Recording_' + message.split('-BREAK-')[1] + '.mp3', context: this.context, isOpenAfterDownload: true);
+                await MobileDownloadService().download(
+                    prefs: widget.prefs,
+                    keyloader: _keyLoader34,
+                    url: message.split('-BREAK-')[0],
+                    fileName: 'Recording_' + message.split('-BREAK-')[1] + '.mp3',
+                    context: this.context,
+                    isOpenAfterDownload: true);
               },
               url: message.split('-BREAK-')[0],
             ),
@@ -1768,17 +1985,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ? doc[Dbkeys.isForward] == true
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
-                      child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          FontAwesomeIcons.share,
-                          size: 12,
-                          color: storychatGrey.withOpacity(0.5),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                      ]))
+                      child: Row(
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.share,
+                              size: 12,
+                              color: storychatGrey.withOpacity(0.5),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            Text(getTranslated(this.context, 'forwarded'),
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: storychatGrey.withOpacity(0.7),
+                                    fontStyle: FontStyle.italic,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 13))
+                          ]))
                   : SizedBox(height: 0, width: 0)
               : SizedBox(height: 0, width: 0),
           ListTile(
@@ -1828,16 +2054,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             ),
                           );
                         },
-                        child: Text(getTranslated(this.context, 'preview'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
+                        child: Text(getTranslated(this.context, 'preview'),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                     ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
                           backgroundColor: Colors.transparent,
                         ),
                         onPressed: () async {
-                          await MobileDownloadService().download(prefs: widget.prefs, url: message.split('-BREAK-')[0], fileName: message.split('-BREAK-')[1], context: context, keyloader: _keyLoader34, isOpenAfterDownload: true);
+                          await MobileDownloadService().download(
+                              prefs: widget.prefs,
+                              url: message.split('-BREAK-')[0],
+                              fileName: message.split('-BREAK-')[1],
+                              context: context,
+                              keyloader: _keyLoader34,
+                              isOpenAfterDownload: true);
                         },
-                        child: Text(getTranslated(this.context, 'download'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
+                        child: Text(getTranslated(this.context, 'download'),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                   ],
                 )
               : ElevatedButton(
@@ -1846,9 +2080,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     backgroundColor: Colors.transparent,
                   ),
                   onPressed: () async {
-                    await MobileDownloadService().download(prefs: widget.prefs, url: message.split('-BREAK-')[0], fileName: message.split('-BREAK-')[1], context: context, keyloader: _keyLoader34, isOpenAfterDownload: true);
+                    await MobileDownloadService().download(
+                        prefs: widget.prefs,
+                        url: message.split('-BREAK-')[0],
+                        fileName: message.split('-BREAK-')[1],
+                        context: context,
+                        keyloader: _keyLoader34,
+                        isOpenAfterDownload: true);
                   },
-                  child: Text(getTranslated(this.context, 'download'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
+                  child: Text(getTranslated(this.context, 'download'),
+                      style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
         ],
       ),
     );
@@ -1866,17 +2107,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ? doc[Dbkeys.isForward] == true
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
-                      child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          FontAwesomeIcons.share,
-                          size: 12,
-                          color: storychatGrey.withOpacity(0.5),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                      ]))
+                      child: Row(
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.share,
+                              size: 12,
+                              color: storychatGrey.withOpacity(0.5),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            Text(getTranslated(this.context, 'forwarded'),
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: storychatGrey.withOpacity(0.7),
+                                    fontStyle: FontStyle.italic,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 13))
+                          ]))
                   : SizedBox(height: 0, width: 0)
               : SizedBox(height: 0, width: 0),
           saved
@@ -1954,7 +2204,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 builder: (context) => new PreviewVideo(
                       prefs: widget.prefs,
                       isdownloadallowed: true,
-                      filename: message.split('-BREAK-').length > 3 ? message.split('-BREAK-')[3] : "Video-${DateTime.now().millisecondsSinceEpoch}.mp4",
+                      filename: message.split('-BREAK-').length > 3
+                          ? message.split('-BREAK-')[3]
+                          : "Video-${DateTime.now().millisecondsSinceEpoch}.mp4",
                       id: null,
                       videourl: message.split('-BREAK-')[0],
                       aspectratio: meta!["width"] / meta["height"],
@@ -1967,17 +2219,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ? doc[Dbkeys.isForward] == true
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
-                      child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          FontAwesomeIcons.share,
-                          size: 12,
-                          color: storychatGrey.withOpacity(0.5),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                      ]))
+                      child: Row(
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.share,
+                              size: 12,
+                              color: storychatGrey.withOpacity(0.5),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            Text(getTranslated(this.context, 'forwarded'),
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: storychatGrey.withOpacity(0.7),
+                                    fontStyle: FontStyle.italic,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 13))
+                          ]))
                   : SizedBox(height: 0, width: 0)
               : SizedBox(height: 0, width: 0),
           Container(
@@ -2046,17 +2307,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ? doc[Dbkeys.isForward] == true
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
-                      child: Row(mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          FontAwesomeIcons.share,
-                          size: 12,
-                          color: storychatGrey.withOpacity(0.5),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Text(getTranslated(this.context, 'forwarded'), maxLines: 1, style: TextStyle(color: storychatGrey.withOpacity(0.7), fontStyle: FontStyle.italic, overflow: TextOverflow.ellipsis, fontSize: 13))
-                      ]))
+                      child: Row(
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.share,
+                              size: 12,
+                              color: storychatGrey.withOpacity(0.5),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            Text(getTranslated(this.context, 'forwarded'),
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: storychatGrey.withOpacity(0.7),
+                                    fontStyle: FontStyle.italic,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 13))
+                          ]))
                   : SizedBox(height: 0, width: 0)
               : SizedBox(height: 0, width: 0),
           ListTile(
@@ -2128,9 +2398,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 Query<Map<String, dynamic>> query;
 
                 if (issearchraw == true) {
-                  query = FirebaseFirestore.instance.collection(DbPaths.collectionusers).where(Dbkeys.phoneRaw, isEqualTo: formattedphone ?? peerphone).limit(1);
+                  query = FirebaseFirestore.instance
+                      .collection(DbPaths.collectionusers)
+                      .where(Dbkeys.phoneRaw, isEqualTo: formattedphone ?? peerphone)
+                      .limit(1);
                 } else {
-                  query = FirebaseFirestore.instance.collection(DbPaths.collectionusers).where(Dbkeys.phone, isEqualTo: formattedphone ?? peerphone).limit(1);
+                  query = FirebaseFirestore.instance
+                      .collection(DbPaths.collectionusers)
+                      .where(Dbkeys.phone, isEqualTo: formattedphone ?? peerphone)
+                      .limit(1);
                 }
 
                 await query.get().then((user) {
@@ -2155,8 +2431,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     );
                   } else {
                     Query<Map<String, dynamic>> queryretrywithoutzero = issearchraw == true
-                        ? FirebaseFirestore.instance.collection(DbPaths.collectionusers).where(Dbkeys.phoneRaw, isEqualTo: formattedphone == null ? peerphone!.substring(1, peerphone!.length) : formattedphone!.substring(1, formattedphone!.length)).limit(1)
-                        : FirebaseFirestore.instance.collection(DbPaths.collectionusers).where(Dbkeys.phoneRaw, isEqualTo: formattedphone == null ? peerphone!.substring(1, peerphone!.length) : formattedphone!.substring(1, formattedphone!.length)).limit(1);
+                        ? FirebaseFirestore.instance
+                            .collection(DbPaths.collectionusers)
+                            .where(Dbkeys.phoneRaw,
+                                isEqualTo: formattedphone == null
+                                    ? peerphone!.substring(1, peerphone!.length)
+                                    : formattedphone!.substring(1, formattedphone!.length))
+                            .limit(1)
+                        : FirebaseFirestore.instance
+                            .collection(DbPaths.collectionusers)
+                            .where(Dbkeys.phoneRaw,
+                                isEqualTo: formattedphone == null
+                                    ? peerphone!.substring(1, peerphone!.length)
+                                    : formattedphone!.substring(1, formattedphone!.length))
+                            .limit(1);
                     queryretrywithoutzero.get().then((user) {
                       setStateIfMounted(() {
                         isUser = user.docs.length == 0 ? false : true;
@@ -2186,7 +2474,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   Fiberchat.toast(getTranslated(this.context, 'usernotjoined') + ' $Appname');
                 }
               },
-              child: Text(getTranslated(this.context, 'msg'), style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400])))
+              child: Text(getTranslated(this.context, 'msg'),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400])))
         ],
       ),
     );
@@ -2279,12 +2568,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             children: [
               Container(
                   margin: EdgeInsetsDirectional.all(4),
-                  decoration: BoxDecoration(color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
+                  decoration:
+                      BoxDecoration(color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
                   child: Row(children: [
                     Container(
                       decoration: BoxDecoration(
                         color: doc[Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple,
-                        borderRadius: BorderRadius.only(topRight: Radius.circular(0), bottomRight: Radius.circular(0), topLeft: Radius.circular(10), bottomLeft: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(0),
+                            bottomRight: Radius.circular(0),
+                            topLeft: Radius.circular(10),
+                            bottomLeft: Radius.circular(10)),
                       ),
                       height: 75,
                       width: 3.3,
@@ -2301,9 +2595,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           Padding(
                             padding: EdgeInsets.only(right: 30),
                             child: Text(
-                              doc[Dbkeys.from] == currentUserNo ? getTranslated(this.context, 'you') : Fiberchat.getNickname(peer!)!,
+                              doc[Dbkeys.from] == currentUserNo
+                                  ? getTranslated(this.context, 'you')
+                                  : Fiberchat.getNickname(peer!)!,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontWeight: FontWeight.bold, color: doc[Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: doc[Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple),
                             ),
                           ),
                           SizedBox(
@@ -2363,7 +2661,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             height: 74.0,
                             padding: EdgeInsetsDirectional.all(6),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                              borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  bottomRight: Radius.circular(5),
+                                  topLeft: Radius.circular(0),
+                                  bottomLeft: Radius.circular(0)),
                               child: CachedNetworkImage(
                                 placeholder: (context, url) => Container(
                                   child: CircularProgressIndicator(
@@ -2408,7 +2710,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   height: 74.0,
                                   padding: EdgeInsetsDirectional.all(6),
                                   child: ClipRRect(
-                                      borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                                      borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(5),
+                                          bottomRight: Radius.circular(5),
+                                          topLeft: Radius.circular(0),
+                                          bottomLeft: Radius.circular(0)),
                                       child: Container(
                                         color: Colors.blueGrey[200],
                                         height: 74,
@@ -2466,7 +2772,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   height: 74.0,
                                   padding: EdgeInsetsDirectional.all(6),
                                   child: ClipRRect(
-                                      borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                                      borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(5),
+                                          bottomRight: Radius.circular(5),
+                                          topLeft: Radius.circular(0),
+                                          bottomLeft: Radius.circular(0)),
                                       child: Container(
                                           color: doc[Dbkeys.messageType] == MessageType.doc.index
                                               ? Colors.yellow[800]
@@ -2509,12 +2819,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             children: [
               Container(
                   margin: EdgeInsetsDirectional.all(4),
-                  decoration: BoxDecoration(color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
+                  decoration:
+                      BoxDecoration(color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
                   child: Row(children: [
                     Container(
                       decoration: BoxDecoration(
                         color: replyDoc![Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple,
-                        borderRadius: BorderRadius.only(topRight: Radius.circular(0), bottomRight: Radius.circular(0), topLeft: Radius.circular(10), bottomLeft: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(0),
+                            bottomRight: Radius.circular(0),
+                            topLeft: Radius.circular(10),
+                            bottomLeft: Radius.circular(10)),
                       ),
                       height: 75,
                       width: 3.3,
@@ -2531,9 +2846,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           Padding(
                             padding: EdgeInsets.only(right: 30),
                             child: Text(
-                              replyDoc![Dbkeys.from] == currentUserNo ? getTranslated(this.context, 'you') : Fiberchat.getNickname(peer!)!,
+                              replyDoc![Dbkeys.from] == currentUserNo
+                                  ? getTranslated(this.context, 'you')
+                                  : Fiberchat.getNickname(peer!)!,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontWeight: FontWeight.bold, color: replyDoc![Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: replyDoc![Dbkeys.from] == currentUserNo ? storychatPRIMARYcolor : Colors.purple),
                             ),
                           ),
                           SizedBox(
@@ -2595,7 +2914,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             height: 84.0,
                             padding: EdgeInsetsDirectional.all(6),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                              borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  bottomRight: Radius.circular(5),
+                                  topLeft: Radius.circular(0),
+                                  bottomLeft: Radius.circular(0)),
                               child: CachedNetworkImage(
                                 placeholder: (context, url) => Container(
                                   child: CircularProgressIndicator(
@@ -2623,7 +2946,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   ),
                                   clipBehavior: Clip.hardEdge,
                                 ),
-                                imageUrl: replyDoc![Dbkeys.messageType] == MessageType.video.index ? '' : replyDoc![Dbkeys.content],
+                                imageUrl:
+                                    replyDoc![Dbkeys.messageType] == MessageType.video.index ? '' : replyDoc![Dbkeys.content],
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
@@ -2640,7 +2964,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   height: 84.0,
                                   padding: EdgeInsetsDirectional.all(6),
                                   child: ClipRRect(
-                                      borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                                      borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(5),
+                                          bottomRight: Radius.circular(5),
+                                          topLeft: Radius.circular(0),
+                                          bottomLeft: Radius.circular(0)),
                                       child: Container(
                                         color: Colors.blueGrey[200],
                                         height: 84,
@@ -2698,7 +3026,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   height: 84.0,
                                   padding: EdgeInsetsDirectional.all(6),
                                   child: ClipRRect(
-                                      borderRadius: BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5), topLeft: Radius.circular(0), bottomLeft: Radius.circular(0)),
+                                      borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(5),
+                                          bottomRight: Radius.circular(5),
+                                          topLeft: Radius.circular(0),
+                                          bottomLeft: Radius.circular(0)),
                                       child: Container(
                                           color: replyDoc![Dbkeys.messageType] == MessageType.doc.index
                                               ? Colors.yellow[800]
@@ -2762,7 +3094,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               child: Center(
                 child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(storychatPRIMARYcolor)),
               ),
-              color: pickTextColorBasedOnBgColorAdvanced(!Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.6),
+              color: pickTextColorBasedOnBgColorAdvanced(
+                      !Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode)
+                  .withOpacity(0.6),
             )
           : Container(),
     );
@@ -2879,11 +3213,24 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               String videoFileext = p.extension(file.path);
                                               String videofileName = 'Video-$timeStamp$videoFileext';
 
-                                              String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(file, true, false, timeStamp, filenameoptional: videofileName);
+                                              String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                  file, true, false, timeStamp,
+                                                  filenameoptional: videofileName);
                                               if (videoUrl != null) {
-                                                String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(thumnailFile, false, true, timeStamp);
+                                                String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                    thumnailFile, false, true, timeStamp);
                                                 if (thumnailUrl != null) {
-                                                  onSendMessage(this.context, videoUrl + '-BREAK-' + thumnailUrl + '-BREAK-' + videometadata! + '-BREAK-' + videofileName, MessageType.video, timeStamp);
+                                                  onSendMessage(
+                                                      this.context,
+                                                      videoUrl +
+                                                          '-BREAK-' +
+                                                          thumnailUrl +
+                                                          '-BREAK-' +
+                                                          videometadata! +
+                                                          '-BREAK-' +
+                                                          videofileName,
+                                                      MessageType.video,
+                                                      timeStamp);
 
                                                   await file.delete();
                                                   await thumnailFile.delete();
@@ -2892,7 +3239,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                             },
                                             file: File(file.path))));
                               } else {
-                                Fiberchat.toast("File type not supported. Please choose a valid .mp4, .mov. \n\nSelected file was $fileExtension ");
+                                Fiberchat.toast(
+                                    "File type not supported. Please choose a valid .mp4, .mov. \n\nSelected file was $fileExtension ");
                               }
                             }
                           },
@@ -2940,7 +3288,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
                                             int timeStamp = DateTime.now().millisecondsSinceEpoch;
 
-                                            String? url = await uploadSelectedLocalFileWithProgressIndicator(file, false, false, timeStamp);
+                                            String? url =
+                                                await uploadSelectedLocalFileWithProgressIndicator(file, false, false, timeStamp);
                                             if (url != null) {
                                               onSendMessage(this.context, url, MessageType.image, timeStamp);
                                               await file.delete();
@@ -3001,7 +3350,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           callback: getFileData,
                                         ))).then((url) {
                               if (url != null) {
-                                onSendMessage(context, url + '-BREAK-' + uploadTimestamp.toString(), MessageType.audio, uploadTimestamp);
+                                onSendMessage(
+                                    context, url + '-BREAK-' + uploadTimestamp.toString(), MessageType.audio, uploadTimestamp);
                               } else {}
                             });
                           },
@@ -3044,8 +3394,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 Fiberchat.toast(getTranslated(this.context, 'detectingloc'));
                                 await _determinePosition().then(
                                   (location) async {
-                                    var locationstring = 'https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}';
-                                    onSendMessage(this.context, locationstring, MessageType.location, DateTime.now().millisecondsSinceEpoch);
+                                    var locationstring =
+                                        'https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}';
+                                    onSendMessage(this.context, locationstring, MessageType.location,
+                                        DateTime.now().millisecondsSinceEpoch);
                                     setStateIfMounted(() {});
                                     Fiberchat.toast(
                                       getTranslated(this.context, 'sent'),
@@ -3101,7 +3453,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         biometricEnabled: false,
                                         prefs: widget.prefs,
                                         onSelect: (name, phone) {
-                                          onSendMessage(context, '$name-BREAK-$phone', MessageType.contact, DateTime.now().millisecondsSinceEpoch);
+                                          onSendMessage(context, '$name-BREAK-$phone', MessageType.contact,
+                                              DateTime.now().millisecondsSinceEpoch);
                                         })));
                           },
                           elevation: .5,
@@ -3134,7 +3487,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         });
   }
 
-  Future uploadSelectedLocalFileWithProgressIndicator(File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch, {String? filenameoptional}) async {
+  Future uploadSelectedLocalFileWithProgressIndicator(File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch,
+      {String? filenameoptional}) async {
     String ext = p.extension(selectedFile.path);
     String fileName = filenameoptional != null
         ? filenameoptional
@@ -3172,15 +3526,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 prefs: widget.prefs,
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
-                                title: isthumbnail == true ? getTranslated(context, 'generatingthumbnail') : getTranslated(context, 'sending'),
-                                subtitle: "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
+                                title: isthumbnail == true
+                                    ? getTranslated(context, 'generatingthumbnail')
+                                    : getTranslated(context, 'sending'),
+                                subtitle:
+                                    "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
                               );
                             } else {
                               return openUploadDialog(
                                 prefs: widget.prefs,
                                 context: context,
                                 percent: 0.0,
-                                title: isthumbnail == true ? getTranslated(context, 'generatingthumbnail') : getTranslated(context, 'sending'),
+                                title: isthumbnail == true
+                                    ? getTranslated(context, 'generatingthumbnail')
+                                    : getTranslated(context, 'sending'),
                                 subtitle: '',
                               );
                             }
@@ -3239,7 +3598,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         title: Text(
           getTranslated(this.context, 'accept') + '${peer![Dbkeys.nickname]} ?',
           style: TextStyle(
-            color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+            color: pickTextColorBasedOnBgColorAdvanced(
+                Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
           ),
         ),
         actions: <Widget>[
@@ -3251,7 +3611,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               child: Text(
                 getTranslated(this.context, 'rjt'),
                 style: TextStyle(
-                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                  color: pickTextColorBasedOnBgColorAdvanced(
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onPressed: () {
@@ -3335,7 +3696,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             borderRadius: BorderRadius.circular(1),
                             borderSide: BorderSide(color: Colors.transparent, width: 1.5),
                           ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(1), borderSide: BorderSide(color: Colors.transparent)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(1), borderSide: BorderSide(color: Colors.transparent)),
                           contentPadding: EdgeInsets.fromLTRB(10, 4, 7, 4),
                           hintText: getTranslated(this.context, 'msg'),
                           hintStyle: TextStyle(color: Colors.grey, fontSize: 15),
@@ -3414,11 +3776,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                                       if (isVideo == true) {
                                                                         String videoFileext = p.extension(file.path);
                                                                         String videofileName = 'Video-$timeStamp$videoFileext';
-                                                                        String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(file, true, false, timeStamp, filenameoptional: videofileName);
+                                                                        String? videoUrl =
+                                                                            await uploadSelectedLocalFileWithProgressIndicator(
+                                                                                file, true, false, timeStamp,
+                                                                                filenameoptional: videofileName);
                                                                         if (videoUrl != null) {
-                                                                          String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(thumnail!, false, true, timeStamp);
+                                                                          String? thumnailUrl =
+                                                                              await uploadSelectedLocalFileWithProgressIndicator(
+                                                                                  thumnail!, false, true, timeStamp);
                                                                           if (thumnailUrl != null) {
-                                                                            onSendMessage(this.context, videoUrl + '-BREAK-' + thumnailUrl + '-BREAK-' + videometadata! + '-BREAK-' + "$videofileName", MessageType.video, timeStamp);
+                                                                            onSendMessage(
+                                                                                this.context,
+                                                                                videoUrl +
+                                                                                    '-BREAK-' +
+                                                                                    thumnailUrl +
+                                                                                    '-BREAK-' +
+                                                                                    videometadata! +
+                                                                                    '-BREAK-' +
+                                                                                    "$videofileName",
+                                                                                MessageType.video,
+                                                                                timeStamp);
                                                                             await file.delete();
                                                                             await thumnail.delete();
                                                                           }
@@ -3426,9 +3803,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                                       } else {
                                                                         String imageFileext = p.extension(file.path);
                                                                         String imagefileName = 'IMG-$timeStamp$imageFileext';
-                                                                        String? url = await uploadSelectedLocalFileWithProgressIndicator(file, false, false, timeStamp, filenameoptional: imagefileName);
+                                                                        String? url =
+                                                                            await uploadSelectedLocalFileWithProgressIndicator(
+                                                                                file, false, false, timeStamp,
+                                                                                filenameoptional: imagefileName);
                                                                         if (url != null) {
-                                                                          onSendMessage(this.context, url, MessageType.image, timeStamp);
+                                                                          onSendMessage(
+                                                                              this.context, url, MessageType.image, timeStamp);
                                                                           await file.delete();
                                                                         }
                                                                       }
@@ -3464,13 +3845,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 : () async {
                                                     GiphyGif? gif = await GiphyGet.getGif(
                                                       tabColor: storychatPRIMARYcolor,
-
                                                       context: context,
                                                       apiKey: GiphyAPIKey,
                                                       lang: GiphyLanguage.english,
                                                     );
                                                     if (gif != null && mounted) {
-                                                      onSendMessage(context, gif.images!.original!.url, MessageType.image, DateTime.now().millisecondsSinceEpoch);
+                                                      onSendMessage(context, gif.images!.original!.url, MessageType.image,
+                                                          DateTime.now().millisecondsSinceEpoch);
                                                       hidekeyboard(context);
                                                       setStateIfMounted(() {});
                                                     }
@@ -3502,7 +3883,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             )
                           : Text(
                               textInSendButton,
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: textInSendButton.length > 2 ? 10.7 : 17.5),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: textInSendButton.length > 2 ? 10.7 : 17.5),
                             ),
                   onPressed: isMessageLoading == true
                       ? null
@@ -3520,7 +3904,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 callback: getFileData,
                                               ))).then((url) {
                                     if (url != null) {
-                                      onSendMessage(context, url + '-BREAK-' + uploadTimestamp.toString(), MessageType.audio, uploadTimestamp);
+                                      onSendMessage(context, url + '-BREAK-' + uploadTimestamp.toString(), MessageType.audio,
+                                          uploadTimestamp);
                                     } else {}
                                   });
                                 }
@@ -3530,7 +3915,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     }
                                   : chatStatus == ChatStatus.blocked.index
                                       ? null
-                                      : () => onSendMessage(context, textEditingController.text, MessageType.text, DateTime.now().millisecondsSinceEpoch)
+                                      : () => onSendMessage(context, textEditingController.text, MessageType.text,
+                                          DateTime.now().millisecondsSinceEpoch)
                           : () {
                               Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
                             },
@@ -3552,11 +3938,47 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               child: SizedBox(
                 height: 300,
                 child: EmojiPicker(
-                    onEmojiSelected: (emojipic.Category category, Emoji emoji) {
-                      _onEmojiSelected(emoji);
-                    },
-                    onBackspacePressed: _onBackspacePressed,
-                    config: Config(columns: 7, emojiSizeMax: 32.0, verticalSpacing: 0, horizontalSpacing: 0, initCategory: emojipic.Category.RECENT, bgColor: Color(0xFFF2F2F2), indicatorColor: storychatPRIMARYcolor, iconColor: Colors.grey, iconColorSelected: storychatPRIMARYcolor, progressIndicatorColor: Colors.blue, backspaceColor: storychatPRIMARYcolor, showRecentsTab: true, recentsLimit: 28, categoryIcons: CategoryIcons(), buttonMode: ButtonMode.MATERIAL)),
+                  onEmojiSelected: (emojipic.Category? category, Emoji emoji) {
+                    _onEmojiSelected(emoji);
+                  },
+                  onBackspacePressed: _onBackspacePressed,
+                  config: Config(
+                    height: 256,
+                    checkPlatformCompatibility: true,
+                    emojiViewConfig: EmojiViewConfig(
+                        // Issue: https://github.com/flutter/flutter/issues/28894
+                        emojiSizeMax: 28 * (foundation.defaultTargetPlatform == TargetPlatform.iOS ? 1.20 : 1.0),
+                        backgroundColor: const Color(0xFFF2F2F2)),
+                    swapCategoryAndBottomBar: false,
+                    skinToneConfig: const SkinToneConfig(),
+                    categoryViewConfig: CategoryViewConfig(
+                      initCategory: emojipic.Category.RECENT,
+                      indicatorColor: storychatPRIMARYcolor,
+                      iconColor: Colors.grey,
+                      iconColorSelected: storychatPRIMARYcolor,
+                      backspaceColor: storychatPRIMARYcolor,
+                    ),
+                    bottomActionBarConfig: const BottomActionBarConfig(),
+                    searchViewConfig: const SearchViewConfig(),
+                  ),
+                  /*config: Config(
+                    columns: 7,
+                    emojiSizeMax: 32.0,
+                    verticalSpacing: 0,
+                    horizontalSpacing: 0,
+                    initCategory: emojipic.Category.RECENT,
+                    bgColor: Color(0xFFF2F2F2),
+                    indicatorColor: storychatPRIMARYcolor,
+                    iconColor: Colors.grey,
+                    iconColorSelected: storychatPRIMARYcolor,
+                    progressIndicatorColor: Colors.blue,
+                    backspaceColor: storychatPRIMARYcolor,
+                    showRecentsTab: true,
+                    recentsLimit: 28,
+                    categoryIcons: CategoryIcons(),
+                    buttonMode: ButtonMode.MATERIAL,
+                  ),*/
+                ),
               ),
             )
           : SizedBox(),
@@ -3566,7 +3988,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool empty = true;
 
   loadMessagesAndListen() async {
-    await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).orderBy(Dbkeys.timestamp).get().then((docs) {
+    await FirebaseFirestore.instance
+        .collection(DbPaths.collectionmessages)
+        .doc(chatId)
+        .collection(chatId!)
+        .orderBy(Dbkeys.timestamp)
+        .get()
+        .then((docs) {
       if (docs.docs.isNotEmpty) {
         empty = false;
 
@@ -3575,7 +4003,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           int? ts = _doc[Dbkeys.timestamp];
 
           try {
-            _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret) : decryptWithCRC(_doc[Dbkeys.content]);
+            _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true
+                ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret)
+                : decryptWithCRC(_doc[Dbkeys.content]);
             messages.add(Message(buildMessage(this.context, _doc),
                 onDismiss: _doc[Dbkeys.content] == '' || _doc[Dbkeys.content] == null
                     ? () {}
@@ -3637,14 +4067,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           messages = List.from(messages);
         });
       }
-      msgSubscription = FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).collection(chatId!).where(Dbkeys.from, isEqualTo: peerNo).snapshots().listen((query) {
+      msgSubscription = FirebaseFirestore.instance
+          .collection(DbPaths.collectionmessages)
+          .doc(chatId)
+          .collection(chatId!)
+          .where(Dbkeys.from, isEqualTo: peerNo)
+          .snapshots()
+          .listen((query) {
         if (empty == true || query.docs.length != query.docChanges.length) {
           query.docChanges.where((doc) {
             return doc.oldIndex <= doc.newIndex && doc.type == DocumentChangeType.added;
           }).forEach((change) {
             Map<String, dynamic> _doc = Map.from(change.doc.data()!);
             int? ts = _doc[Dbkeys.timestamp];
-            _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret) : decryptWithCRC(_doc[Dbkeys.content]);
+            _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true
+                ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret)
+                : decryptWithCRC(_doc[Dbkeys.content]);
 
             messages.add(Message(
               buildMessage(this.context, _doc),
@@ -3714,7 +4152,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               messages.removeAt(i);
               setStateIfMounted(() {});
               int? ts = _doc[Dbkeys.timestamp];
-              _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret) : decryptWithCRC(_doc[Dbkeys.content]);
+              _doc[Dbkeys.content] = _doc.containsKey(Dbkeys.latestEncrypted) == true
+                  ? AESEncryptData.decryptAES(_doc[Dbkeys.content], sharedSecret)
+                  : decryptWithCRC(_doc[Dbkeys.content]);
               messages.insert(
                   i,
                   Message(
@@ -3800,9 +4240,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() {
         currentUploadingIndex = index;
       });
-      await getFileData(File(widget.sharedFiles![index].path), timestamp: messagetime, totalFiles: widget.sharedFiles!.length).then((imageUrl) async {
+      await getFileData(File(widget.sharedFiles![index].path), timestamp: messagetime, totalFiles: widget.sharedFiles!.length)
+          .then((imageUrl) async {
         if (imageUrl != null) {
-          MessageType type = fileName.contains('.png') || fileName.contains('.gif') || fileName.contains('.jpg') || fileName.contains('.jpeg') || fileName.contains('giphy')
+          MessageType type = fileName.contains('.png') ||
+                  fileName.contains('.gif') ||
+                  fileName.contains('.jpg') ||
+                  fileName.contains('.jpeg') ||
+                  fileName.contains('giphy')
               ? MessageType.image
               : fileName.contains('.mp4') || fileName.contains('.mov')
                   ? MessageType.video
@@ -3816,7 +4261,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             setStateIfMounted(() {});
           }
 
-          String finalUrl = fileName.contains('.png') || fileName.contains('.gif') || fileName.contains('.jpg') || fileName.contains('.jpeg') || fileName.contains('giphy')
+          String finalUrl = fileName.contains('.png') ||
+                  fileName.contains('.gif') ||
+                  fileName.contains('.jpg') ||
+                  fileName.contains('.jpeg') ||
+                  fileName.contains('giphy')
               ? imageUrl
               : fileName.contains('.mp4') || fileName.contains('.mov')
                   ? imageUrl + '-BREAK-' + thumbnailurl + '-BREAK-' + videometadata
@@ -3848,12 +4297,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   List<Widget> getGroupedMessages() {
-    List<Widget> _groupedMessages = new List.from(<Widget>[
-      Card(
-        elevation: 0.5,
-        color: Color(0xffFFF2BE),
-        margin: EdgeInsets.fromLTRB(10, 20, 10, 20),
-        child: Container(
+    List<Widget> _groupedMessages = new List.from(
+      <Widget>[
+        Card(
+          elevation: 0.5,
+          color: Color(0xffFFF2BE),
+          margin: EdgeInsets.fromLTRB(10, 20, 10, 20),
+          child: Container(
             padding: EdgeInsets.fromLTRB(8, 10, 8, 10),
             child: RichText(
               textAlign: TextAlign.center,
@@ -3946,7 +4396,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ? Center(
                               child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor)),
                             )
-                          : Text(getTranslated(this.context, 'sayhi'), textAlign: TextAlign.center, style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(!Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.6), fontSize: 18))),
+                          : Text(getTranslated(this.context, 'sayhi'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: pickTextColorBasedOnBgColorAdvanced(!Thm.isDarktheme(widget.prefs)
+                                          ? storychatAPPBARcolorDarkMode
+                                          : storychatAPPBARcolorLightMode)
+                                      .withOpacity(0.6),
+                                  fontSize: 18))),
                 ],
                 controller: realtime,
               )
@@ -3966,7 +4423,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     else if (date.day == now.subtract(Duration(days: 1)).day)
       when = getTranslated(this.context, 'yesterday');
     else
-      when = IsShowNativeTimDate == true ? getTranslated(this.context, DateFormat.MMMM().format(date)) + ' ' + DateFormat.d().format(date) : when = DateFormat.MMMd().format(date);
+      when = IsShowNativeTimDate == true
+          ? getTranslated(this.context, DateFormat.MMMM().format(date)) + ' ' + DateFormat.d().format(date)
+          : when = DateFormat.MMMd().format(date);
     return when;
   }
 
@@ -3976,7 +4435,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       return getTranslated(this.context, 'online');
     } else if (val is int) {
       DateTime date = DateTime.fromMillisecondsSinceEpoch(val);
-      String at = observer.is24hrsTimeformat == false ? DateFormat.jm().format(date) : DateFormat('HH:mm').format(date), when = getWhen(date);
+      String at = observer.is24hrsTimeformat == false ? DateFormat.jm().format(date) : DateFormat('HH:mm').format(date),
+          when = getWhen(date);
       return getTranslated(this.context, 'lastseen') + ' $when, $at';
     } else if (val is String) {
       if (val == currentUserNo) return getTranslated(this.context, 'typing');
@@ -4099,7 +4559,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         Text(
                           getTranslated(context, 'audiocall'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14, color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                              color: pickTextColorBasedOnBgColorAdvanced(
+                                  Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode)),
                         ),
                       ],
                     ),
@@ -4155,9 +4619,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 return peer != null
                     ? peer![Dbkeys.accountstatus] == Dbkeys.sTATUSdeleted
                         ? Scaffold(
-                            backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatCHATBACKGROUNDDarkMode : storychatCHATBACKGROUNDLightMode,
+                            backgroundColor: Thm.isDarktheme(widget.prefs)
+                                ? storychatCHATBACKGROUNDDarkMode
+                                : storychatCHATBACKGROUNDLightMode,
                             appBar: AppBar(
-                              backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
+                              backgroundColor:
+                                  Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
                               elevation: 0,
                               leading: Container(
                                 margin: EdgeInsets.only(right: 0),
@@ -4166,7 +4633,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   icon: Icon(
                                     Icons.arrow_back_ios,
                                     size: 20,
-                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
+                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                        ? storychatAPPBARcolorDarkMode
+                                        : storychatAPPBARcolorLightMode),
                                   ),
                                   onPressed: () {
                                     Navigator.of(this.context).pop();
@@ -4210,7 +4679,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                       icon: Icon(
                                         Icons.arrow_back_ios,
                                         size: 20,
-                                        color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
+                                        color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                            ? storychatAPPBARcolorDarkMode
+                                            : storychatAPPBARcolorLightMode),
                                       ),
                                       onPressed: () {
                                         if (isDeletedDoc == true) {
@@ -4226,12 +4697,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                       },
                                     ),
                                   ),
-                                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
+                                  backgroundColor: Thm.isDarktheme(widget.prefs)
+                                      ? storychatAPPBARcolorDarkMode
+                                      : storychatAPPBARcolorLightMode,
                                   title: InkWell(
                                     onTap: () {
-                                      Navigator.push(context, PageRouteBuilder(opaque: false, pageBuilder: (context, a1, a2) => ProfileView(peer!, widget.currentUserNo, _cachedModel, widget.prefs, messages)));
+                                      Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                              opaque: false,
+                                              pageBuilder: (context, a1, a2) => ProfileView(
+                                                  peer!, widget.currentUserNo, _cachedModel, widget.prefs, messages)));
                                     },
-                                    child: Consumer<SmartContactProviderWithLocalStoreData>(builder: (context, availableContacts, _child) {
+                                    child: Consumer<SmartContactProviderWithLocalStoreData>(
+                                        builder: (context, availableContacts, _child) {
                                       return Row(
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
@@ -4239,10 +4718,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               ? Padding(
                                                   padding: const EdgeInsets.fromLTRB(0, 7, 0, 7),
                                                   child: FutureBuilder<LocalUserData?>(
-                                                      future: availableContacts.fetchUserDataFromnLocalOrServer(widget.prefs, widget.peerNo!),
+                                                      future: availableContacts.fetchUserDataFromnLocalOrServer(
+                                                          widget.prefs, widget.peerNo!),
                                                       builder: (BuildContext context, AsyncSnapshot<LocalUserData?> snapshot) {
                                                         if (snapshot.hasData && snapshot.data != null) {
-                                                          return Fiberchat.avatar(peer, radius: 20, predefinedinitials: Fiberchat.getInitials(snapshot.data!.name));
+                                                          return Fiberchat.avatar(peer,
+                                                              radius: 20,
+                                                              predefinedinitials: Fiberchat.getInitials(snapshot.data!.name));
                                                         }
                                                         return Fiberchat.avatar(peer, radius: 20);
                                                       }),
@@ -4265,35 +4747,59 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                   children: [
                                                     IsShowUserFullNameAsSavedInYourContacts == true
                                                         ? FutureBuilder<LocalUserData?>(
-                                                            future: availableContacts.fetchUserDataFromnLocalOrServer(widget.prefs, widget.peerNo!),
-                                                            builder: (BuildContext context, AsyncSnapshot<LocalUserData?> snapshot) {
+                                                            future: availableContacts.fetchUserDataFromnLocalOrServer(
+                                                                widget.prefs, widget.peerNo!),
+                                                            builder:
+                                                                (BuildContext context, AsyncSnapshot<LocalUserData?> snapshot) {
                                                               if (snapshot.hasData && snapshot.data != null) {
                                                                 return Text(
                                                                   snapshot.data!.name,
                                                                   overflow: TextOverflow.ellipsis,
                                                                   maxLines: 1,
-                                                                  style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode), fontSize: 17.0, fontWeight: FontWeight.w500),
+                                                                  style: TextStyle(
+                                                                      color: pickTextColorBasedOnBgColorAdvanced(
+                                                                          Thm.isDarktheme(widget.prefs)
+                                                                              ? storychatAPPBARcolorDarkMode
+                                                                              : storychatAPPBARcolorLightMode),
+                                                                      fontSize: 17.0,
+                                                                      fontWeight: FontWeight.w500),
                                                                 );
                                                               }
                                                               return Text(
                                                                 Fiberchat.getNickname(peer!)!,
                                                                 overflow: TextOverflow.ellipsis,
                                                                 maxLines: 1,
-                                                                style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode), fontSize: 17.0, fontWeight: FontWeight.w500),
+                                                                style: TextStyle(
+                                                                    color: pickTextColorBasedOnBgColorAdvanced(
+                                                                        Thm.isDarktheme(widget.prefs)
+                                                                            ? storychatAPPBARcolorDarkMode
+                                                                            : storychatAPPBARcolorLightMode),
+                                                                    fontSize: 17.0,
+                                                                    fontWeight: FontWeight.w500),
                                                               );
                                                             })
                                                         : Text(
                                                             Fiberchat.getNickname(peer!)!,
                                                             overflow: TextOverflow.ellipsis,
                                                             maxLines: 1,
-                                                            style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode), fontSize: 17.0, fontWeight: FontWeight.w500),
+                                                            style: TextStyle(
+                                                                color: pickTextColorBasedOnBgColorAdvanced(
+                                                                    Thm.isDarktheme(widget.prefs)
+                                                                        ? storychatAPPBARcolorDarkMode
+                                                                        : storychatAPPBARcolorLightMode),
+                                                                fontSize: 17.0,
+                                                                fontWeight: FontWeight.w500),
                                                           ),
                                                     isCurrentUserMuted
                                                         ? Padding(
                                                             padding: const EdgeInsets.only(left: 5.0),
                                                             child: Icon(
                                                               Icons.volume_off,
-                                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.5),
+                                                              color: pickTextColorBasedOnBgColorAdvanced(
+                                                                      Thm.isDarktheme(widget.prefs)
+                                                                          ? storychatAPPBARcolorDarkMode
+                                                                          : storychatAPPBARcolorLightMode)
+                                                                  .withOpacity(0.5),
                                                               size: 17,
                                                             ),
                                                           )
@@ -4307,11 +4813,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               chatId != null
                                                   ? Text(
                                                       getPeerStatus(peer![Dbkeys.lastSeen]),
-                                                      style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w400),
+                                                      style: TextStyle(
+                                                          color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                                  ? storychatAPPBARcolorDarkMode
+                                                                  : storychatAPPBARcolorLightMode)
+                                                              .withOpacity(0.9),
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w400),
                                                     )
                                                   : Text(
                                                       getTranslated(this.context, 'loading'),
-                                                      style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w400),
+                                                      style: TextStyle(
+                                                          color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                                  ? storychatAPPBARcolorDarkMode
+                                                                  : storychatAPPBARcolorLightMode)
+                                                              .withOpacity(0.9),
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w400),
                                                     ),
                                             ],
                                           ),
@@ -4324,8 +4842,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   children: <Widget>[
                                     new Container(
                                       decoration: new BoxDecoration(
-                                        color: Thm.isDarktheme(widget.prefs) ? storychatCHATBACKGROUNDDarkMode : storychatCHATBACKGROUNDLightMode,
-                                        image: new DecorationImage(image: peer![Dbkeys.wallpaper] == null ? AssetImage(Thm.isDarktheme(widget.prefs) ? "assets/images/background_dark.png" : "assets/images/background_light.png") : Image.file(File(peer![Dbkeys.wallpaper])).image, fit: BoxFit.cover),
+                                        color: Thm.isDarktheme(widget.prefs)
+                                            ? storychatCHATBACKGROUNDDarkMode
+                                            : storychatCHATBACKGROUNDLightMode,
+                                        image: new DecorationImage(
+                                            image: peer![Dbkeys.wallpaper] == null
+                                                ? AssetImage(Thm.isDarktheme(widget.prefs)
+                                                    ? "assets/images/background_dark.png"
+                                                    : "assets/images/background_light.png")
+                                                : Image.file(File(peer![Dbkeys.wallpaper])).image,
+                                            fit: BoxFit.cover),
                                       ),
                                     ),
                                     PageView(
@@ -4334,7 +4860,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                             ? Center(
                                                 child: Padding(
                                                   padding: const EdgeInsets.fromLTRB(15, 60, 15, 15),
-                                                  child: Text(getTranslated(this.context, 'chatdeleted'), style: TextStyle(color: storychatGrey)),
+                                                  child: Text(getTranslated(this.context, 'chatdeleted'),
+                                                      style: TextStyle(color: storychatGrey)),
                                                 ),
                                               )
                                             : Column(
@@ -4342,21 +4869,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                   buildMessages(context),
                                                   isBlocked()
                                                       ? AlertDialog(
-                                                          backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+                                                          backgroundColor: Thm.isDarktheme(widget.prefs)
+                                                              ? storychatDIALOGColorDarkMode
+                                                              : storychatDIALOGColorLightMode,
                                                           elevation: 10.0,
                                                           title: Text(
-                                                            getTranslated(this.context, 'unblock') + ' ${peer![Dbkeys.nickname]}?',
+                                                            getTranslated(this.context, 'unblock') +
+                                                                ' ${peer![Dbkeys.nickname]}?',
                                                             style: TextStyle(
-                                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                              color: pickTextColorBasedOnBgColorAdvanced(
+                                                                  Thm.isDarktheme(widget.prefs)
+                                                                      ? storychatDIALOGColorDarkMode
+                                                                      : storychatDIALOGColorLightMode),
                                                             ),
                                                           ),
                                                           actions: <Widget>[
                                                             myElevatedButton(
-                                                                color: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+                                                                color: Thm.isDarktheme(widget.prefs)
+                                                                    ? storychatDIALOGColorDarkMode
+                                                                    : storychatDIALOGColorLightMode,
                                                                 child: Text(
                                                                   getTranslated(this.context, 'cancel'),
                                                                   style: TextStyle(
-                                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                                    color: pickTextColorBasedOnBgColorAdvanced(
+                                                                        Thm.isDarktheme(widget.prefs)
+                                                                            ? storychatDIALOGColorDarkMode
+                                                                            : storychatDIALOGColorLightMode),
                                                                   ),
                                                                 ),
                                                                 onPressed: () {

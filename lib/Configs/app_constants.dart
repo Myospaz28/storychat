@@ -32,7 +32,7 @@ final InputBorder newTextBoxFocusedBorder = newTextBoxBorder.copyWith(
 
 // Unique Color for your App -----
 
-final storychatPRIMARYcolor = Color.fromRGBO(122, 107, 187, 1);
+const storychatPRIMARYcolor = Color.fromRGBO(122, 107, 187, 1);
 // you may change this as per your theme. This applies to large buttons, tabs, text heading etc.
 final storychatSECONDARYolor = Color.fromRGBO(122, 107, 187, 1);
 // you may change this as per your theme. This applies to small buttons, icons & highlights

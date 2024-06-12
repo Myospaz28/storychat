@@ -133,7 +133,7 @@ class _ContactsState extends State<Contacts>
     Completer<Map<String?, String?>> completer =
         new Completer<Map<String?, String?>>();
 
-    LocalStorage storage = LocalStorage(Dbkeys.cachedContacts);
+    // LocalStorage storage = LocalStorage(Dbkeys.cachedContacts);
 
     Map<String?, String?> _cachedContacts = {};
 
@@ -148,8 +148,8 @@ class _ContactsState extends State<Contacts>
 
     Fiberchat.checkAndRequestPermission(Permission.contacts).then((res) {
       if (res) {
-        storage.ready.then((ready) async {
-          if (ready) {
+        // storage.ready.then((ready) async {
+        //   if (ready) {
             String? getNormalizedNumber(String? number) {
               if (number == null) return null;
               return number.replaceAll(new RegExp('[^0-9+]'), '');
@@ -180,9 +180,9 @@ class _ContactsState extends State<Contacts>
               // await storage.setItem(Dbkeys.cachedContacts, _cachedContacts);
               completer.complete(_cachedContacts);
             });
-          }
-          // }
-        });
+        //   }
+        //   // }
+        // });
       } else {
         Fiberchat.showRationale(getTranslated(context, 'perm_contact'));
         Navigator.pushReplacement(

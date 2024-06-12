@@ -1,5 +1,3 @@
-//*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
-
 import 'dart:async';
 import 'dart:core';
 import 'dart:io';
@@ -22,26 +20,20 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '/Configs/Dbkeys.dart';
 import '/Configs/Dbpaths.dart';
 import '/Configs/app_constants.dart';
 import '/Configs/optional_constants.dart';
 import '/Models/DataModel.dart';
-import '/Screens/Broadcast/AddContactsToBroadcast.dart';
-import '/Screens/Groups/AddContactsToGroup.dart';
-import '/Screens/SettingsOption/settingsOption.dart';
 import '/Screens/auth_screens/login.dart';
 import '/Screens/call_history/callhistory.dart';
 import '/Screens/calling_screen/pickup_layout.dart';
 import '/Screens/homepage/Setupdata.dart';
 import '/Screens/notifications/AllNotifications.dart';
-import '/Screens/profile_settings/profileSettings.dart';
-import '/Screens/recent_chats/RecentChatsWithoutLastMessage.dart';
 import '/Screens/recent_chats/RecentsChats.dart';
-import '/Screens/search_chats/SearchRecentChat.dart';
 import '/Screens/sharing_intent/SelectContactToShare.dart';
 import '/Screens/splash_screen/splash_screen.dart';
-import '/Screens/status/status.dart';
 import '/Services/Providers/Observer.dart';
 import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
 import '/Services/Providers/StatusProvider.dart';
@@ -52,16 +44,15 @@ import '/Services/localization/language.dart';
 import '/Services/localization/language_constants.dart';
 import '/Utils/color_detector.dart';
 import '/Utils/custom_url_launcher.dart';
-import '/Utils/error_codes.dart';
 import '/Utils/phonenumberVariantsGenerator.dart';
 import '/Utils/theme_management.dart';
 import '/Utils/unawaited.dart';
 import '/Utils/utils.dart';
 import '/main.dart';
-import '/widgets/DynamicBottomSheet/dynamic_modal_bottomsheet.dart';
 
 class Homepage extends StatefulWidget {
-  Homepage({required this.currentUserNo, required this.prefs, required this.doc, this.isShowOnlyCircularSpin = false, key}) : super(key: key);
+  Homepage({required this.currentUserNo, required this.prefs, required this.doc, this.isShowOnlyCircularSpin = false, key})
+      : super(key: key);
   final String? currentUserNo;
   final DocumentSnapshot<Map<String, dynamic>> doc;
   final bool? isShowOnlyCircularSpin;
@@ -162,13 +153,15 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
           if (controllerIfcallallowed!.index == 2) {
             final statusProvider = Provider.of<StatusProvider>(context, listen: false);
             final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-            statusProvider.searchContactStatus(widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
+            statusProvider.searchContactStatus(
+                widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
           }
         } else {
           if (controllerIfcallallowed!.index == 1) {
             final statusProvider = Provider.of<StatusProvider>(context, listen: false);
             final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-            statusProvider.searchContactStatus(widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
+            statusProvider.searchContactStatus(
+                widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
           }
         }
       });
@@ -177,13 +170,15 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
           if (controllerIfcallNotallowed!.index == 2) {
             final statusProvider = Provider.of<StatusProvider>(context, listen: false);
             final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-            statusProvider.searchContactStatus(widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
+            statusProvider.searchContactStatus(
+                widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
           }
         } else {
           if (controllerIfcallNotallowed!.index == 1) {
             final statusProvider = Provider.of<StatusProvider>(context, listen: false);
             final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-            statusProvider.searchContactStatus(widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
+            statusProvider.searchContactStatus(
+                widget.currentUserNo!, FutureGroup(), contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer);
           }
         }
       });
@@ -210,8 +205,10 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
 
   incrementSessionCount(String myphone) async {
     final StatusProvider statusProvider = Provider.of<StatusProvider>(context, listen: false);
-    final SmartContactProviderWithLocalStoreData contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-    final FirestoreDataProviderCALLHISTORY firestoreDataProviderCALLHISTORY = Provider.of<FirestoreDataProviderCALLHISTORY>(context, listen: false);
+    final SmartContactProviderWithLocalStoreData contactsProvider =
+        Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
+    final FirestoreDataProviderCALLHISTORY firestoreDataProviderCALLHISTORY =
+        Provider.of<FirestoreDataProviderCALLHISTORY>(context, listen: false);
     await FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docuserscount).set(
         Platform.isAndroid
             ? {
@@ -234,9 +231,18 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                 Dbkeys.totalvisitsIOS: FieldValue.increment(1),
               },
         SetOptions(merge: true));
-    firestoreDataProviderCALLHISTORY.fetchNextData('CALLHISTORY', FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserNo).collection(DbPaths.collectioncallhistory).orderBy('TIME', descending: true).limit(10), true);
+    firestoreDataProviderCALLHISTORY.fetchNextData(
+        'CALLHISTORY',
+        FirebaseFirestore.instance
+            .collection(DbPaths.collectionusers)
+            .doc(widget.currentUserNo)
+            .collection(DbPaths.collectioncallhistory)
+            .orderBy('TIME', descending: true)
+            .limit(10),
+        true);
     if (OnlyPeerWhoAreSavedInmyContactCanMessageOrCallMe == false) {
-      await contactsProvider.fetchContacts(context, _cachedModel, myphone, widget.prefs, false, currentuserphoneNumberVariants: phoneNumberVariants);
+      await contactsProvider.fetchContacts(context, _cachedModel, myphone, widget.prefs, false,
+          currentuserphoneNumberVariants: phoneNumberVariants);
     }
 
     //  await statusProvider.searchContactStatus(
@@ -251,19 +257,35 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
   triggerSharing() {
     final observer = Provider.of<Observer>(this.context, listen: false);
     if (_sharedText != null) {
-      Navigator.push(context, new MaterialPageRoute(builder: (context) => new SelectContactToShare(prefs: widget.prefs, model: _cachedModel!, currentUserNo: widget.currentUserNo, sharedFiles: _sharedFiles!, sharedText: _sharedText)));
+      Navigator.push(
+          context,
+          new MaterialPageRoute(
+              builder: (context) => new SelectContactToShare(
+                  prefs: widget.prefs,
+                  model: _cachedModel!,
+                  currentUserNo: widget.currentUserNo,
+                  sharedFiles: _sharedFiles!,
+                  sharedText: _sharedText)));
     } else if (_sharedFiles != null) {
       if (_sharedFiles!.length > observer.maxNoOfFilesInMultiSharing) {
         Fiberchat.toast(getTranslated(context, 'maxnooffiles') + ' ' + '${observer.maxNoOfFilesInMultiSharing}');
       } else {
-        Navigator.push(context, new MaterialPageRoute(builder: (context) => new SelectContactToShare(prefs: widget.prefs, model: _cachedModel!, currentUserNo: widget.currentUserNo, sharedFiles: _sharedFiles!, sharedText: _sharedText)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) => new SelectContactToShare(
+                    prefs: widget.prefs,
+                    model: _cachedModel!,
+                    currentUserNo: widget.currentUserNo,
+                    sharedFiles: _sharedFiles!,
+                    sharedText: _sharedText)));
       }
     }
   }
 
   listenToSharingintent() {
     // For sharing images coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription = ReceiveSharingIntent.getMediaStream().listen((List<SharedMediaFile> value) {
+    _intentDataStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
       setState(() {
         _sharedFiles = value;
       });
@@ -272,14 +294,14 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
     });
 
     // For sharing images coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) {
+    ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
       setState(() {
         _sharedFiles = value;
       });
     });
 
     // For sharing or opening urls/text coming from outside the app while the app is in the memory
-    _intentDataStreamSubscription = ReceiveSharingIntent.getTextStream().listen((String value) {
+    /* _intentDataStreamSubscription = ReceiveSharingIntent.instance.getTextStream().listen((String value) {
       setState(() {
         _sharedText = value;
       });
@@ -288,11 +310,11 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
     });
 
     // For sharing or opening urls/text coming from outside the app while the app is closed
-    ReceiveSharingIntent.getInitialText().then((String? value) {
+    ReceiveSharingIntent.instance.getInitialText().then((String? value) {
       setState(() {
         _sharedText = value;
       });
-    });
+    });*/
   }
 
   unsubscribeToNotification(String? userphone) async {
@@ -416,7 +438,13 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
       // ignore: unnecessary_null_comparison
       flutterLocalNotificationsPlugin..cancelAll();
 
-      if (message.data['title'] != 'Call Ended' && message.data['title'] != 'Missed Call' && message.data['title'] != 'You have new message(s)' && message.data['title'] != 'Incoming Video Call...' && message.data['title'] != 'Incoming Audio Call...' && message.data['title'] != 'Incoming Call ended' && message.data['title'] != 'New message in Group') {
+      if (message.data['title'] != 'Call Ended' &&
+          message.data['title'] != 'Missed Call' &&
+          message.data['title'] != 'You have new message(s)' &&
+          message.data['title'] != 'Incoming Video Call...' &&
+          message.data['title'] != 'Incoming Audio Call...' &&
+          message.data['title'] != 'Incoming Call ended' &&
+          message.data['title'] != 'New message in Group') {
         Fiberchat.toast(getTranslated(this.context, 'newnotifications'));
       } else {
         if (message.data['title'] == 'New message in Group') {
@@ -536,7 +564,13 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
       if (android != null) {
         if (notificationData['title'] == 'Call Ended') {
           flutterLocalNotificationsPlugin..cancelAll();
-        } else if (notificationData['title'] != 'Call Ended' && notificationData['title'] != 'You have new message(s)' && notificationData['title'] != 'Missed Call' && notificationData['title'] != 'Incoming Video Call...' && notificationData['title'] != 'Incoming Audio Call...' && notificationData['title'] != 'Incoming Call ended' && notificationData['title'] != 'New message in Group') {
+        } else if (notificationData['title'] != 'Call Ended' &&
+            notificationData['title'] != 'You have new message(s)' &&
+            notificationData['title'] != 'Missed Call' &&
+            notificationData['title'] != 'Incoming Video Call...' &&
+            notificationData['title'] != 'Incoming Audio Call...' &&
+            notificationData['title'] != 'Incoming Call ended' &&
+            notificationData['title'] != 'New message in Group') {
           flutterLocalNotificationsPlugin..cancelAll();
 
           Navigator.push(
@@ -554,7 +588,13 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
       if (message != null) {
         flutterLocalNotificationsPlugin..cancelAll();
         Map<String, dynamic>? notificationData = message.data;
-        if (notificationData['title'] != 'Call Ended' && notificationData['title'] != 'You have new message(s)' && notificationData['title'] != 'Missed Call' && notificationData['title'] != 'Incoming Video Call...' && notificationData['title'] != 'Incoming Audio Call...' && notificationData['title'] != 'Incoming Call ended' && notificationData['title'] != 'New message in Group') {
+        if (notificationData['title'] != 'Call Ended' &&
+            notificationData['title'] != 'You have new message(s)' &&
+            notificationData['title'] != 'Missed Call' &&
+            notificationData['title'] != 'Incoming Video Call...' &&
+            notificationData['title'] != 'Incoming Audio Call...' &&
+            notificationData['title'] != 'Incoming Call ended' &&
+            notificationData['title'] != 'New message in Group') {
           flutterLocalNotificationsPlugin..cancelAll();
 
           Navigator.push(
@@ -578,187 +618,197 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
 
   getSignedInUserOrRedirect() async {
     // try {
+    setState(() {
+      isblockNewlogins = widget.doc.data()![Dbkeys.isblocknewlogins];
+      isApprovalNeededbyAdminForNewUser = widget.doc[Dbkeys.isaccountapprovalbyadminneeded];
+      accountApprovalMessage = widget.doc[Dbkeys.accountapprovalmessage];
+    });
+    if (widget.doc.data()![Dbkeys.isemulatorallowed] == false && mapDeviceInfo[Dbkeys.deviceInfoISPHYSICAL] == false) {
       setState(() {
-        isblockNewlogins = widget.doc.data()![Dbkeys.isblocknewlogins];
-        isApprovalNeededbyAdminForNewUser = widget.doc[Dbkeys.isaccountapprovalbyadminneeded];
-        accountApprovalMessage = widget.doc[Dbkeys.accountapprovalmessage];
+        isNotAllowEmulator = true;
       });
-      if (widget.doc.data()![Dbkeys.isemulatorallowed] == false && mapDeviceInfo[Dbkeys.deviceInfoISPHYSICAL] == false) {
-        setState(() {
-          isNotAllowEmulator = true;
-        });
+    } else {
+      if (widget.doc[Platform.isAndroid
+              ? Dbkeys.isappunderconstructionandroid
+              : Platform.isIOS
+                  ? Dbkeys.isappunderconstructionios
+                  : Dbkeys.isappunderconstructionweb] ==
+          true) {
+        await unsubscribeToNotification(widget.currentUserNo);
+        maintainanceMessage = widget.doc[Dbkeys.maintainancemessage];
+        setState(() {});
       } else {
-        if (widget.doc[Platform.isAndroid
-                ? Dbkeys.isappunderconstructionandroid
-                : Platform.isIOS
-                    ? Dbkeys.isappunderconstructionios
-                    : Dbkeys.isappunderconstructionweb] ==
-            true) {
-          await unsubscribeToNotification(widget.currentUserNo);
-          maintainanceMessage = widget.doc[Dbkeys.maintainancemessage];
-          setState(() {});
-        } else {
-          final PackageInfo info = await PackageInfo.fromPlatform();
-          widget.prefs.setString('app_version', info.version);
+        final PackageInfo info = await PackageInfo.fromPlatform();
+        widget.prefs.setString('app_version', info.version);
 
-          int currentAppVersionInPhone = int.tryParse(info.version.trim().split(".")[0].toString().padLeft(3, '0') + info.version.trim().split(".")[1].toString().padLeft(3, '0') + info.version.trim().split(".")[2].toString().padLeft(3, '0')) ?? 0;
-          int currentNewAppVersionInServer = int.tryParse(widget.doc[Platform.isAndroid
-                          ? Dbkeys.latestappversionandroid
-                          : Platform.isIOS
-                              ? Dbkeys.latestappversionios
-                              : Dbkeys.latestappversionweb]
-                      .trim()
-                      .split(".")[0]
-                      .toString()
-                      .padLeft(3, '0') +
-                  widget.doc[Platform.isAndroid
-                          ? Dbkeys.latestappversionandroid
-                          : Platform.isIOS
-                              ? Dbkeys.latestappversionios
-                              : Dbkeys.latestappversionweb]
-                      .trim()
-                      .split(".")[1]
-                      .toString()
-                      .padLeft(3, '0') +
-                  widget.doc[Platform.isAndroid
-                          ? Dbkeys.latestappversionandroid
-                          : Platform.isIOS
-                              ? Dbkeys.latestappversionios
-                              : Dbkeys.latestappversionweb]
-                      .trim()
-                      .split(".")[2]
-                      .toString()
-                      .padLeft(3, '0')) ??
-              0;
-          if (currentAppVersionInPhone < currentNewAppVersionInServer) {
-            showDialog<String>(
-              context: context,
-              barrierDismissible: false,
-              builder: (BuildContext context) {
-                String title = getTranslated(context, 'updateavl');
-                String message = getTranslated(context, 'updateavlmsg');
+        int currentAppVersionInPhone = int.tryParse(info.version.trim().split(".")[0].toString().padLeft(3, '0') +
+                info.version.trim().split(".")[1].toString().padLeft(3, '0') +
+                info.version.trim().split(".")[2].toString().padLeft(3, '0')) ??
+            0;
+        int currentNewAppVersionInServer = int.tryParse(widget.doc[Platform.isAndroid
+                        ? Dbkeys.latestappversionandroid
+                        : Platform.isIOS
+                            ? Dbkeys.latestappversionios
+                            : Dbkeys.latestappversionweb]
+                    .trim()
+                    .split(".")[0]
+                    .toString()
+                    .padLeft(3, '0') +
+                widget.doc[Platform.isAndroid
+                        ? Dbkeys.latestappversionandroid
+                        : Platform.isIOS
+                            ? Dbkeys.latestappversionios
+                            : Dbkeys.latestappversionweb]
+                    .trim()
+                    .split(".")[1]
+                    .toString()
+                    .padLeft(3, '0') +
+                widget.doc[Platform.isAndroid
+                        ? Dbkeys.latestappversionandroid
+                        : Platform.isIOS
+                            ? Dbkeys.latestappversionios
+                            : Dbkeys.latestappversionweb]
+                    .trim()
+                    .split(".")[2]
+                    .toString()
+                    .padLeft(3, '0')) ??
+            0;
+        if (currentAppVersionInPhone < currentNewAppVersionInServer) {
+          showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              String title = getTranslated(context, 'updateavl');
+              String message = getTranslated(context, 'updateavlmsg');
 
-                String btnLabel = getTranslated(context, 'updatnow');
+              String btnLabel = getTranslated(context, 'updatnow');
 
-                return new WillPopScope(
-                    onWillPop: () async => false,
-                    child: AlertDialog(
-                      backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
-                      title: Text(
-                        title,
-                        style: TextStyle(
-                          color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
-                        ),
+              return new WillPopScope(
+                  onWillPop: () async => false,
+                  child: AlertDialog(
+                    backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        color: pickTextColorBasedOnBgColorAdvanced(
+                            Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                       ),
-                      content: Text(message),
-                      actions: <Widget>[
-                        TextButton(
-                            child: Text(
-                              btnLabel,
-                              style: TextStyle(color: storychatPRIMARYcolor),
-                            ),
-                            onPressed: () => custom_url_launcher(widget.doc[Platform.isAndroid
-                                ? Dbkeys.newapplinkandroid
-                                : Platform.isIOS
-                                    ? Dbkeys.newapplinkios
-                                    : Dbkeys.newapplinkweb])),
-                      ],
-                    ));
-              },
-            );
-          } else {
-            final observer = Provider.of<Observer>(this.context, listen: false);
-
-            observer.setObserver(
-              getuserAppSettingsDoc: widget.doc,
-              getisWebCompatible: widget.doc.data()!.containsKey('is_web_compatible') ? widget.doc.data()!['is_web_compatible'] : false,
-              getandroidapplink: widget.doc[Dbkeys.newapplinkandroid],
-              getiosapplink: widget.doc[Dbkeys.newapplinkios],
-              getisadmobshow: widget.doc[Dbkeys.isadmobshow],
-              getismediamessagingallowed: widget.doc[Dbkeys.ismediamessageallowed],
-              getistextmessagingallowed: widget.doc[Dbkeys.istextmessageallowed],
-              getiscallsallowed: widget.doc[Dbkeys.iscallsallowed],
-              gettnc: widget.doc[Dbkeys.tnc],
-              gettncType: widget.doc[Dbkeys.tncTYPE],
-              getprivacypolicy: widget.doc[Dbkeys.privacypolicy],
-              getprivacypolicyType: widget.doc[Dbkeys.privacypolicyTYPE],
-              getis24hrsTimeformat: widget.doc[Dbkeys.is24hrsTimeformat],
-              getmaxFileSizeAllowedInMB: widget.doc[Dbkeys.maxFileSizeAllowedInMB],
-              getisPercentProgressShowWhileUploading: widget.doc[Dbkeys.isPercentProgressShowWhileUploading],
-              getisCallFeatureTotallyHide: widget.doc[Dbkeys.isCallFeatureTotallyHide],
-              getgroupMemberslimit: widget.doc[Dbkeys.groupMemberslimit],
-              getbroadcastMemberslimit: widget.doc[Dbkeys.broadcastMemberslimit],
-              getstatusDeleteAfterInHours: widget.doc[Dbkeys.statusDeleteAfterInHours],
-              getfeedbackEmail: widget.doc[Dbkeys.feedbackEmail],
-              getisLogoutButtonShowInSettingsPage: widget.doc[Dbkeys.isLogoutButtonShowInSettingsPage],
-              getisAllowCreatingGroups: widget.doc[Dbkeys.isAllowCreatingGroups],
-              getisAllowCreatingBroadcasts: widget.doc[Dbkeys.isAllowCreatingBroadcasts],
-              getisAllowCreatingStatus: widget.doc[Dbkeys.isAllowCreatingStatus],
-              getmaxNoOfFilesInMultiSharing: widget.doc[Dbkeys.maxNoOfFilesInMultiSharing],
-              getmaxNoOfContactsSelectForForward: widget.doc[Dbkeys.maxNoOfContactsSelectForForward],
-              getappShareMessageStringAndroid: widget.doc[Dbkeys.appShareMessageStringAndroid],
-              getappShareMessageStringiOS: widget.doc[Dbkeys.appShareMessageStringiOS],
-              getisCustomAppShareLink: widget.doc[Dbkeys.isCustomAppShareLink],
-            );
-
-            if (widget.currentUserNo == null || widget.currentUserNo!.isEmpty) {
-              // await unsubscribeToNotification(widget.currentUserNo);
-
-              unawaited(
-                Navigator.pushReplacement(
-                  context,
-                  new MaterialPageRoute(
-                    builder: (context) => new LoginScreen(
-                      prefs: widget.prefs,
-                      accountApprovalMessage: accountApprovalMessage,
-                      isaccountapprovalbyadminneeded: isApprovalNeededbyAdminForNewUser,
-                      isblocknewlogins: isblockNewlogins,
-                      title: getTranslated(context, 'signin'),
-                      doc: widget.doc,
                     ),
+                    content: Text(message),
+                    actions: <Widget>[
+                      TextButton(
+                          child: Text(
+                            btnLabel,
+                            style: TextStyle(color: storychatPRIMARYcolor),
+                          ),
+                          onPressed: () => custom_url_launcher(widget.doc[Platform.isAndroid
+                              ? Dbkeys.newapplinkandroid
+                              : Platform.isIOS
+                                  ? Dbkeys.newapplinkios
+                                  : Dbkeys.newapplinkweb])),
+                    ],
+                  ));
+            },
+          );
+        } else {
+          final observer = Provider.of<Observer>(this.context, listen: false);
+
+          observer.setObserver(
+            getuserAppSettingsDoc: widget.doc,
+            getisWebCompatible:
+                widget.doc.data()!.containsKey('is_web_compatible') ? widget.doc.data()!['is_web_compatible'] : false,
+            getandroidapplink: widget.doc[Dbkeys.newapplinkandroid],
+            getiosapplink: widget.doc[Dbkeys.newapplinkios],
+            getisadmobshow: widget.doc[Dbkeys.isadmobshow],
+            getismediamessagingallowed: widget.doc[Dbkeys.ismediamessageallowed],
+            getistextmessagingallowed: widget.doc[Dbkeys.istextmessageallowed],
+            getiscallsallowed: widget.doc[Dbkeys.iscallsallowed],
+            gettnc: widget.doc[Dbkeys.tnc],
+            gettncType: widget.doc[Dbkeys.tncTYPE],
+            getprivacypolicy: widget.doc[Dbkeys.privacypolicy],
+            getprivacypolicyType: widget.doc[Dbkeys.privacypolicyTYPE],
+            getis24hrsTimeformat: widget.doc[Dbkeys.is24hrsTimeformat],
+            getmaxFileSizeAllowedInMB: widget.doc[Dbkeys.maxFileSizeAllowedInMB],
+            getisPercentProgressShowWhileUploading: widget.doc[Dbkeys.isPercentProgressShowWhileUploading],
+            getisCallFeatureTotallyHide: widget.doc[Dbkeys.isCallFeatureTotallyHide],
+            getgroupMemberslimit: widget.doc[Dbkeys.groupMemberslimit],
+            getbroadcastMemberslimit: widget.doc[Dbkeys.broadcastMemberslimit],
+            getstatusDeleteAfterInHours: widget.doc[Dbkeys.statusDeleteAfterInHours],
+            getfeedbackEmail: widget.doc[Dbkeys.feedbackEmail],
+            getisLogoutButtonShowInSettingsPage: widget.doc[Dbkeys.isLogoutButtonShowInSettingsPage],
+            getisAllowCreatingGroups: widget.doc[Dbkeys.isAllowCreatingGroups],
+            getisAllowCreatingBroadcasts: widget.doc[Dbkeys.isAllowCreatingBroadcasts],
+            getisAllowCreatingStatus: widget.doc[Dbkeys.isAllowCreatingStatus],
+            getmaxNoOfFilesInMultiSharing: widget.doc[Dbkeys.maxNoOfFilesInMultiSharing],
+            getmaxNoOfContactsSelectForForward: widget.doc[Dbkeys.maxNoOfContactsSelectForForward],
+            getappShareMessageStringAndroid: widget.doc[Dbkeys.appShareMessageStringAndroid],
+            getappShareMessageStringiOS: widget.doc[Dbkeys.appShareMessageStringiOS],
+            getisCustomAppShareLink: widget.doc[Dbkeys.isCustomAppShareLink],
+          );
+
+          if (widget.currentUserNo == null || widget.currentUserNo!.isEmpty) {
+            // await unsubscribeToNotification(widget.currentUserNo);
+
+            unawaited(
+              Navigator.pushReplacement(
+                context,
+                new MaterialPageRoute(
+                  builder: (context) => new LoginScreen(
+                    prefs: widget.prefs,
+                    accountApprovalMessage: accountApprovalMessage,
+                    isaccountapprovalbyadminneeded: isApprovalNeededbyAdminForNewUser,
+                    isblocknewlogins: isblockNewlogins,
+                    title: getTranslated(context, 'signin'),
+                    doc: widget.doc,
                   ),
                 ),
-              );
-            } else {
-              await FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserNo ?? widget.currentUserNo).get().then((userDoc) async {
-                if (deviceid != userDoc[Dbkeys.currentDeviceID] || !userDoc.data()!.containsKey(Dbkeys.currentDeviceID)) {
-                  if (ConnectWithAdminApp == true) {
-                    await unsubscribeToNotification(widget.currentUserNo);
-                  }
+              ),
+            );
+          } else {
+            await FirebaseFirestore.instance
+                .collection(DbPaths.collectionusers)
+                .doc(widget.currentUserNo ?? widget.currentUserNo)
+                .get()
+                .then((userDoc) async {
+              if (deviceid != userDoc[Dbkeys.currentDeviceID] || !userDoc.data()!.containsKey(Dbkeys.currentDeviceID)) {
+                if (ConnectWithAdminApp == true) {
+                  await unsubscribeToNotification(widget.currentUserNo);
+                }
+                await logout(context);
+              } else {
+                if (!userDoc.data()!.containsKey(Dbkeys.accountstatus)) {
                   await logout(context);
-                } else {
-                  if (!userDoc.data()!.containsKey(Dbkeys.accountstatus)) {
-                    await logout(context);
-                  } else if (userDoc[Dbkeys.accountstatus] != Dbkeys.sTATUSallowed) {
-                    if (userDoc[Dbkeys.accountstatus] == Dbkeys.sTATUSdeleted) {
-                      setState(() {
-                        accountstatus = userDoc[Dbkeys.accountstatus];
-                        accountactionmessage = userDoc[Dbkeys.actionmessage];
-                      });
-                    } else {
-                      setState(() {
-                        accountstatus = userDoc[Dbkeys.accountstatus];
-                        accountactionmessage = userDoc[Dbkeys.actionmessage];
-                      });
-                    }
+                } else if (userDoc[Dbkeys.accountstatus] != Dbkeys.sTATUSallowed) {
+                  if (userDoc[Dbkeys.accountstatus] == Dbkeys.sTATUSdeleted) {
+                    setState(() {
+                      accountstatus = userDoc[Dbkeys.accountstatus];
+                      accountactionmessage = userDoc[Dbkeys.actionmessage];
+                    });
                   } else {
                     setState(() {
-                      userFullname = userDoc[Dbkeys.nickname];
-                      userPhotourl = userDoc[Dbkeys.photoUrl];
-                      phoneNumberVariants = phoneNumberVariantsList(countrycode: userDoc[Dbkeys.countryCode], phonenumber: userDoc[Dbkeys.phoneRaw]);
-                      isFetching = false;
+                      accountstatus = userDoc[Dbkeys.accountstatus];
+                      accountactionmessage = userDoc[Dbkeys.actionmessage];
                     });
-                    getuid(context);
-                    setIsActive();
-
-                    incrementSessionCount(userDoc[Dbkeys.username]);
                   }
+                } else {
+                  setState(() {
+                    userFullname = userDoc[Dbkeys.nickname];
+                    userPhotourl = userDoc[Dbkeys.photoUrl];
+                    phoneNumberVariants =
+                        phoneNumberVariantsList(countrycode: userDoc[Dbkeys.countryCode], phonenumber: userDoc[Dbkeys.phoneRaw]);
+                    isFetching = false;
+                  });
+                  getuid(context);
+                  setIsActive();
+
+                  incrementSessionCount(userDoc[Dbkeys.username]);
                 }
-              });
-            }
+              }
+            });
           }
         }
       }
+    }
     // } catch (e) {
     //   showERRORSheet(this.context, "", message: e.toString());
     // }
@@ -806,10 +856,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
             : ConnectWithAdminApp == true && maintainanceMessage != null
                 ? errorScreen('App Under maintainance', maintainanceMessage)
                 : ConnectWithAdminApp == true && isFetching == true
-                    ? Splashscreen(
-                        isShowOnlySpinner: widget.isShowOnlyCircularSpin,
-                        doc: widget.doc
-                      )
+                    ? Splashscreen(isShowOnlySpinner: widget.isShowOnlyCircularSpin, doc: widget.doc)
                     : PickupLayout(
                         prefs: widget.prefs,
                         scaffold: Fiberchat.getNTPWrappedWidget(
@@ -901,7 +948,8 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                         ),
                                                         Row(
                                                           children: () {
-                                                            DateTime? since = FirebaseAuth.instance.currentUser?.metadata.creationTime;
+                                                            DateTime? since =
+                                                                FirebaseAuth.instance.currentUser?.metadata.creationTime;
 
                                                             if (since != null) {
                                                               return [
@@ -936,7 +984,8 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                               padding: const EdgeInsets.all(12),
                                               child: StreamBuilder(
                                                 stream: playlistsStream,
-                                                builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot) {
+                                                builder: (BuildContext context,
+                                                    AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot) {
                                                   if (snapshot.hasData) {
                                                     var myDoc = snapshot.data!;
 
@@ -974,14 +1023,17 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                           crossAxisSpacing: 12,
                                                           children: [
                                                             for (var entry in (myDoc.data() ?? {}).entries.take(4))
-                                                                  () {
+                                                              () {
                                                                 var data = entry.value;
 
                                                                 return FutureBuilder(
                                                                   future: () async {
-                                                                    return FirebaseStorage.instance.ref("Playlists/Images/${data['thumbnail']}").getDownloadURL();
+                                                                    return FirebaseStorage.instance
+                                                                        .ref("Playlists/Images/${data['thumbnail']}")
+                                                                        .getDownloadURL();
                                                                   }(),
-                                                                  builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                                                  builder:
+                                                                      (BuildContext context, AsyncSnapshot<String> snapshot) {
                                                                     if (snapshot.hasData) {
                                                                       return Container(
                                                                         decoration: BoxDecoration(
@@ -1065,14 +1117,17 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                           crossAxisSpacing: 12,
                                                           children: [
                                                             for (var entry in (myDoc.data() ?? {}).entries)
-                                                                  () {
+                                                              () {
                                                                 var data = entry.value;
 
                                                                 return FutureBuilder(
                                                                   future: () async {
-                                                                    return FirebaseStorage.instance.ref("Playlists/Images/${data['thumbnail']}").getDownloadURL();
+                                                                    return FirebaseStorage.instance
+                                                                        .ref("Playlists/Images/${data['thumbnail']}")
+                                                                        .getDownloadURL();
                                                                   }(),
-                                                                  builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                                                  builder:
+                                                                      (BuildContext context, AsyncSnapshot<String> snapshot) {
                                                                     if (snapshot.hasData) {
                                                                       return Container(
                                                                         decoration: BoxDecoration(
@@ -1159,15 +1214,30 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                           })
                                                           .cast<Map<String, dynamic>>()
                                                           .forEach((targetUser) async {
-                                                            String chatId = Fiberchat.getChatId(widget.currentUserNo!, targetUser[Dbkeys.phone]);
+                                                            String chatId = Fiberchat.getChatId(
+                                                                widget.currentUserNo!, targetUser[Dbkeys.phone]);
 
                                                             if (targetUser[Dbkeys.phone] != null) {
-                                                              await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).delete().then((v) async {
-                                                                await FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserNo!).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).set({
+                                                              await FirebaseFirestore.instance
+                                                                  .collection(DbPaths.collectionmessages)
+                                                                  .doc(chatId)
+                                                                  .delete()
+                                                                  .then((v) async {
+                                                                await FirebaseFirestore.instance
+                                                                    .collection(DbPaths.collectionusers)
+                                                                    .doc(widget.currentUserNo!)
+                                                                    .collection(Dbkeys.chatsWith)
+                                                                    .doc(Dbkeys.chatsWith)
+                                                                    .set({
                                                                   targetUser[Dbkeys.phone]: FieldValue.delete(),
                                                                 }, SetOptions(merge: true));
 
-                                                                await FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(targetUser[Dbkeys.phone]).collection(Dbkeys.chatsWith).doc(Dbkeys.chatsWith).set({
+                                                                await FirebaseFirestore.instance
+                                                                    .collection(DbPaths.collectionusers)
+                                                                    .doc(targetUser[Dbkeys.phone])
+                                                                    .collection(Dbkeys.chatsWith)
+                                                                    .doc(Dbkeys.chatsWith)
+                                                                    .set({
                                                                   widget.currentUserNo!: FieldValue.delete(),
                                                                 }, SetOptions(merge: true));
                                                               }).then((value) {});
@@ -1280,7 +1350,7 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                         ),
                       );
 
-    super.build(context);
+    /* super.build(context);
 
     final observer = Provider.of<Observer>(context, listen: true);
 
@@ -1299,14 +1369,23 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                         scaffold: Fiberchat.getNTPWrappedWidget(WillPopScope(
                           onWillPop: onWillPop,
                           child: Scaffold(
-                              backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatBACKGROUNDcolorDarkMode : storychatBACKGROUNDcolorLightMode,
+                              backgroundColor: Thm.isDarktheme(widget.prefs)
+                                  ? storychatBACKGROUNDcolorDarkMode
+                                  : storychatBACKGROUNDcolorLightMode,
                               appBar: AppBar(
                                   elevation: 0.4,
-                                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
+                                  backgroundColor: Thm.isDarktheme(widget.prefs)
+                                      ? storychatAPPBARcolorDarkMode
+                                      : storychatAPPBARcolorLightMode,
                                   title: IsShowAppLogoInHomepage == false
                                       ? Text(
                                           Appname,
-                                          style: TextStyle(color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode), fontSize: 20.0, fontFamily: FONTFAMILY_NAME_ONLY_LOGO == '' ? null : FONTFAMILY_NAME_ONLY_LOGO),
+                                          style: TextStyle(
+                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                  ? storychatAPPBARcolorDarkMode
+                                                  : storychatAPPBARcolorLightMode),
+                                              fontSize: 20.0,
+                                              fontFamily: FONTFAMILY_NAME_ONLY_LOGO == '' ? null : FONTFAMILY_NAME_ONLY_LOGO),
                                         )
                                       : Align(
                                           alignment: Alignment.centerLeft,
@@ -1344,14 +1423,24 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                 children: <Widget>[
                                                                   Text(
-                                                                    IsShowLanguageNameInNativeLanguage == true ? e.flag + ' ' + '    ' + e.name : e.flag + ' ' + '    ' + e.languageNameInEnglish,
-                                                                    style: TextStyle(color: Thm.isDarktheme(widget.prefs) ? storychatWhite : storychatBlack, fontWeight: FontWeight.w500, fontSize: 16),
+                                                                    IsShowLanguageNameInNativeLanguage == true
+                                                                        ? e.flag + ' ' + '    ' + e.name
+                                                                        : e.flag + ' ' + '    ' + e.languageNameInEnglish,
+                                                                    style: TextStyle(
+                                                                        color: Thm.isDarktheme(widget.prefs)
+                                                                            ? storychatWhite
+                                                                            : storychatBlack,
+                                                                        fontWeight: FontWeight.w500,
+                                                                        fontSize: 16),
                                                                   ),
                                                                   Language.languageList().length < 2
                                                                       ? SizedBox()
                                                                       : Icon(
                                                                           Icons.done,
-                                                                          color: e.languageCode == widget.prefs.getString(LAGUAGE_CODE) ? storychatSECONDARYolor : Colors.transparent,
+                                                                          color: e.languageCode ==
+                                                                                  widget.prefs.getString(LAGUAGE_CODE)
+                                                                              ? storychatSECONDARYolor
+                                                                              : Colors.transparent,
                                                                         )
                                                                 ],
                                                               ),
@@ -1369,7 +1458,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   children: [
                                                     Icon(
                                                       Icons.language_outlined,
-                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
+                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                          ? storychatAPPBARcolorDarkMode
+                                                          : storychatAPPBARcolorLightMode),
                                                       size: 22,
                                                     ),
                                                     SizedBox(
@@ -1381,7 +1472,8 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                           ? storychatSECONDARYolor
                                                           : isDarkColor(storychatBACKGROUNDcolorLightMode) == true
                                                               ? storychatWhite.withOpacity(0.6)
-                                                              : pickTextColorBasedOnBgColorAdvanced(storychatAPPBARcolorLightMode).withOpacity(0.65),
+                                                              : pickTextColorBasedOnBgColorAdvanced(storychatAPPBARcolorLightMode)
+                                                                  .withOpacity(0.65),
                                                       size: 27,
                                                     )
                                                   ],
@@ -1395,10 +1487,14 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                           padding: const EdgeInsets.only(right: 1),
                                           child: Icon(
                                             Icons.more_vert_outlined,
-                                            color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
+                                            color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                ? storychatAPPBARcolorDarkMode
+                                                : storychatAPPBARcolorLightMode),
                                           ),
                                         ),
-                                        color: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+                                        color: Thm.isDarktheme(widget.prefs)
+                                            ? storychatDIALOGColorDarkMode
+                                            : storychatDIALOGColorLightMode,
                                         onSelected: (dynamic val) async {
                                           switch (val) {
                                             case 'rate':
@@ -1408,14 +1504,19 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   context: context,
                                                   builder: (context) {
                                                     return SimpleDialog(
-                                                      backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
+                                                      backgroundColor: Thm.isDarktheme(widget.prefs)
+                                                          ? storychatDIALOGColorDarkMode
+                                                          : storychatDIALOGColorLightMode,
                                                       contentPadding: EdgeInsets.all(20),
                                                       children: <Widget>[
                                                         ListTile(
                                                           title: Text(
                                                             getTranslated(context, 'swipeview'),
                                                             style: TextStyle(
-                                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                              color: pickTextColorBasedOnBgColorAdvanced(
+                                                                  Thm.isDarktheme(widget.prefs)
+                                                                      ? storychatDIALOGColorDarkMode
+                                                                      : storychatDIALOGColorLightMode),
                                                             ),
                                                           ),
                                                         ),
@@ -1426,7 +1527,10 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                             title: Text(
                                                           getTranslated(context, 'swipehide'),
                                                           style: TextStyle(
-                                                            color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                            color: pickTextColorBasedOnBgColorAdvanced(
+                                                                Thm.isDarktheme(widget.prefs)
+                                                                    ? storychatDIALOGColorDarkMode
+                                                                    : storychatDIALOGColorLightMode),
                                                           ),
                                                         )),
                                                         SizedBox(
@@ -1436,7 +1540,10 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                             title: Text(
                                                           getTranslated(context, 'lp_setalias'),
                                                           style: TextStyle(
-                                                            color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                            color: pickTextColorBasedOnBgColorAdvanced(
+                                                                Thm.isDarktheme(widget.prefs)
+                                                                    ? storychatDIALOGColorDarkMode
+                                                                    : storychatDIALOGColorLightMode),
                                                           ),
                                                         ))
                                                       ],
@@ -1478,7 +1585,8 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                                       builder: (context) => ProfileSetting(
                                                                             prefs: widget.prefs,
                                                                             biometricEnabled: biometricEnabled,
-                                                                            type: Fiberchat.getAuthenticationType(biometricEnabled, _cachedModel),
+                                                                            type: Fiberchat.getAuthenticationType(
+                                                                                biometricEnabled, _cachedModel),
                                                                           )));
                                                             },
                                                             currentUserNo: widget.currentUserNo!,
@@ -1491,8 +1599,10 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                               if (observer.isAllowCreatingGroups == false) {
                                                 Fiberchat.showRationale(getTranslated(this.context, 'disabled'));
                                               } else {
-                                                final SmartContactProviderWithLocalStoreData dbcontactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-                                                dbcontactsProvider.fetchContacts(context, _cachedModel, widget.currentUserNo!, widget.prefs, false);
+                                                final SmartContactProviderWithLocalStoreData dbcontactsProvider =
+                                                    Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
+                                                dbcontactsProvider.fetchContacts(
+                                                    context, _cachedModel, widget.currentUserNo!, widget.prefs, false);
                                                 Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -1510,8 +1620,10 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                               if (observer.isAllowCreatingBroadcasts == false) {
                                                 Fiberchat.showRationale(getTranslated(this.context, 'disabled'));
                                               } else {
-                                                final SmartContactProviderWithLocalStoreData dbcontactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
-                                                dbcontactsProvider.fetchContacts(context, _cachedModel, widget.currentUserNo!, widget.prefs, false);
+                                                final SmartContactProviderWithLocalStoreData dbcontactsProvider =
+                                                    Provider.of<SmartContactProviderWithLocalStoreData>(context, listen: false);
+                                                dbcontactsProvider.fetchContacts(
+                                                    context, _cachedModel, widget.currentUserNo!, widget.prefs, false);
                                                 await Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -1532,7 +1644,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   child: Text(
                                                     getTranslated(context, 'newgroup'),
                                                     style: TextStyle(
-                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                          ? storychatDIALOGColorDarkMode
+                                                          : storychatDIALOGColorLightMode),
                                                     ),
                                                   )),
                                               PopupMenuItem<String>(
@@ -1540,7 +1654,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   child: Text(
                                                     getTranslated(context, 'newbroadcast'),
                                                     style: TextStyle(
-                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                          ? storychatDIALOGColorDarkMode
+                                                          : storychatDIALOGColorLightMode),
                                                     ),
                                                   )),
                                               PopupMenuItem<String>(
@@ -1548,7 +1664,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                 child: Text(
                                                   getTranslated(context, 'tutorials'),
                                                   style: TextStyle(
-                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                        ? storychatDIALOGColorDarkMode
+                                                        : storychatDIALOGColorLightMode),
                                                   ),
                                                 ),
                                               ),
@@ -1557,7 +1675,9 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                                   child: Text(
                                                     getTranslated(context, 'settingsoption'),
                                                     style: TextStyle(
-                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                                          ? storychatDIALOGColorDarkMode
+                                                          : storychatDIALOGColorLightMode),
                                                     ),
                                                   )),
                                             ]),
@@ -1565,9 +1685,19 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                   bottom: TabBar(
                                     isScrollable: IsAdaptiveWidthTab == true
                                         ? true
-                                        : DEFAULT_LANGUAGE_FILE_CODE == "en" && (widget.prefs.getString(LAGUAGE_CODE) == null || widget.prefs.getString(LAGUAGE_CODE) == "en")
+                                        : DEFAULT_LANGUAGE_FILE_CODE == "en" &&
+                                                (widget.prefs.getString(LAGUAGE_CODE) == null ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == "en")
                                             ? false
-                                            : widget.prefs.getString(LAGUAGE_CODE) == 'pt' || widget.prefs.getString(LAGUAGE_CODE) == 'my' || widget.prefs.getString(LAGUAGE_CODE) == 'nl' || widget.prefs.getString(LAGUAGE_CODE) == 'vi' || widget.prefs.getString(LAGUAGE_CODE) == 'tr' || widget.prefs.getString(LAGUAGE_CODE) == 'id' || widget.prefs.getString(LAGUAGE_CODE) == 'ka' || widget.prefs.getString(LAGUAGE_CODE) == 'fr' || widget.prefs.getString(LAGUAGE_CODE) == 'es'
+                                            : widget.prefs.getString(LAGUAGE_CODE) == 'pt' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'my' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'nl' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'vi' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'tr' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'id' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'ka' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'fr' ||
+                                                    widget.prefs.getString(LAGUAGE_CODE) == 'es'
                                                 ? true
                                                 : false,
                                     labelStyle: TextStyle(
@@ -1578,15 +1708,22 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                       fontWeight: FontWeight.bold,
                                       fontFamily: FONTFAMILY_NAME == '' ? null : FONTFAMILY_NAME,
                                     ),
-                                    labelColor: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode),
-                                    unselectedLabelColor: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode).withOpacity(0.6),
+                                    labelColor: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                        ? storychatAPPBARcolorDarkMode
+                                        : storychatAPPBARcolorLightMode),
+                                    unselectedLabelColor: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                            ? storychatAPPBARcolorDarkMode
+                                            : storychatAPPBARcolorLightMode)
+                                        .withOpacity(0.6),
                                     indicatorWeight: 3,
                                     indicatorColor: Thm.isDarktheme(widget.prefs)
                                         ? storychatSECONDARYolor
                                         : storychatAPPBARcolorLightMode == Colors.white
                                             ? storychatSECONDARYolor
                                             : storychatWhite,
-                                    controller: observer.isCallFeatureTotallyHide == false ? controllerIfcallallowed : controllerIfcallNotallowed,
+                                    controller: observer.isCallFeatureTotallyHide == false
+                                        ? controllerIfcallallowed
+                                        : controllerIfcallNotallowed,
                                     tabs: observer.isCallFeatureTotallyHide == false
                                         ? (IsShowSearchTab
                                                 ? <Widget>[
@@ -1659,16 +1796,37 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                             ],
                                   )),
                               body: TabBarView(
-                                controller: observer.isCallFeatureTotallyHide == false ? controllerIfcallallowed : controllerIfcallNotallowed,
+                                controller: observer.isCallFeatureTotallyHide == false
+                                    ? controllerIfcallallowed
+                                    : controllerIfcallNotallowed,
                                 children: observer.isCallFeatureTotallyHide == false
                                     ? (IsShowSearchTab
                                             ? <Widget>[
-                                                SearchChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false),
+                                                SearchChats(
+                                                    prefs: widget.prefs,
+                                                    currentUserNo: widget.currentUserNo,
+                                                    isSecuritySetupDone: false),
                                               ]
                                             : <Widget>[]) +
                                         <Widget>[
-                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false, doc: widget.doc),
-                                          Status(currentUserFullname: userFullname, currentUserPhotourl: userPhotourl, phoneNumberVariants: this.phoneNumberVariants, currentUserNo: widget.currentUserNo, model: _cachedModel, biometricEnabled: biometricEnabled, prefs: widget.prefs),
+                                          IsShowLastMessageInChatTileWithTime == false
+                                              ? RecentChatsWithoutLastMessage(
+                                                  prefs: widget.prefs,
+                                                  currentUserNo: widget.currentUserNo,
+                                                  isSecuritySetupDone: false)
+                                              : RecentChats(
+                                                  prefs: widget.prefs,
+                                                  currentUserNo: widget.currentUserNo,
+                                                  isSecuritySetupDone: false,
+                                                  doc: widget.doc),
+                                          Status(
+                                              currentUserFullname: userFullname,
+                                              currentUserPhotourl: userPhotourl,
+                                              phoneNumberVariants: this.phoneNumberVariants,
+                                              currentUserNo: widget.currentUserNo,
+                                              model: _cachedModel,
+                                              biometricEnabled: biometricEnabled,
+                                              prefs: widget.prefs),
                                           CallHistory(
                                             model: _cachedModel,
                                             userphone: widget.currentUserNo,
@@ -1677,15 +1835,34 @@ class HomepageState extends State<Homepage> with WidgetsBindingObserver, Automat
                                         ]
                                     : (IsShowSearchTab
                                             ? <Widget>[
-                                                SearchChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false),
+                                                SearchChats(
+                                                    prefs: widget.prefs,
+                                                    currentUserNo: widget.currentUserNo,
+                                                    isSecuritySetupDone: false),
                                               ]
                                             : <Widget>[]) +
                                         <Widget>[
-                                          IsShowLastMessageInChatTileWithTime == false ? RecentChatsWithoutLastMessage(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false) : RecentChats(prefs: widget.prefs, currentUserNo: widget.currentUserNo, isSecuritySetupDone: false, doc: widget.doc),
-                                          Status(currentUserFullname: userFullname, currentUserPhotourl: userPhotourl, phoneNumberVariants: this.phoneNumberVariants, currentUserNo: widget.currentUserNo, model: _cachedModel, biometricEnabled: biometricEnabled, prefs: widget.prefs),
+                                          IsShowLastMessageInChatTileWithTime == false
+                                              ? RecentChatsWithoutLastMessage(
+                                                  prefs: widget.prefs,
+                                                  currentUserNo: widget.currentUserNo,
+                                                  isSecuritySetupDone: false)
+                                              : RecentChats(
+                                                  prefs: widget.prefs,
+                                                  currentUserNo: widget.currentUserNo,
+                                                  isSecuritySetupDone: false,
+                                                  doc: widget.doc),
+                                          Status(
+                                              currentUserFullname: userFullname,
+                                              currentUserPhotourl: userPhotourl,
+                                              phoneNumberVariants: this.phoneNumberVariants,
+                                              currentUserNo: widget.currentUserNo,
+                                              model: _cachedModel,
+                                              biometricEnabled: biometricEnabled,
+                                              prefs: widget.prefs),
                                         ],
                               )),
-                        )));
+                        )));*/
   }
 }
 
@@ -1729,15 +1906,30 @@ Future showNotificationWithDefaultSound(String? title, String? message, String? 
   var initializationSettings = InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
   flutterLocalNotificationsPlugin.initialize(initializationSettings);
   var androidPlatformChannelSpecifics = title == 'Missed Call' || title == 'Call Ended'
-      ? local.AndroidNotificationDetails('channel_id', 'channel_name', importance: local.Importance.max, priority: local.Priority.high, sound: RawResourceAndroidNotificationSound('whistle2'), playSound: true, ongoing: true, visibility: NotificationVisibility.public, timeoutAfter: 28000)
-      : local.AndroidNotificationDetails('channel_id', 'channel_name', sound: RawResourceAndroidNotificationSound('ringtone'), playSound: true, ongoing: true, importance: local.Importance.max, priority: local.Priority.high, visibility: NotificationVisibility.public, timeoutAfter: 28000);
+      ? local.AndroidNotificationDetails('channel_id', 'channel_name',
+          importance: local.Importance.max,
+          priority: local.Priority.high,
+          sound: RawResourceAndroidNotificationSound('whistle2'),
+          playSound: true,
+          ongoing: true,
+          visibility: NotificationVisibility.public,
+          timeoutAfter: 28000)
+      : local.AndroidNotificationDetails('channel_id', 'channel_name',
+          sound: RawResourceAndroidNotificationSound('ringtone'),
+          playSound: true,
+          ongoing: true,
+          importance: local.Importance.max,
+          priority: local.Priority.high,
+          visibility: NotificationVisibility.public,
+          timeoutAfter: 28000);
   var iOSPlatformChannelSpecifics = local.DarwinNotificationDetails(
     presentAlert: true,
     presentBadge: true,
     sound: title == 'Missed Call' || title == 'Call Ended' ? '' : 'ringtone.caf',
     presentSound: true,
   );
-  var platformChannelSpecifics = local.NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
+  var platformChannelSpecifics =
+      local.NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
   await flutterLocalNotificationsPlugin
       .show(
     0,

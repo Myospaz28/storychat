@@ -1,17 +1,19 @@
 //*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
 
-import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
-import '/Configs/Dbkeys.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '/Configs/Dbkeys.dart';
+
 class Save {
-  static final LocalStorage storage = new LocalStorage(Dbkeys.saved);
+  // static final LocalStorage storage = new LocalStorage(Dbkeys.saved);
 
   static Future<String> getBase64FromImage({String? imageUrl, File? file}) {
     Completer<String> complete = new Completer<String>();
@@ -29,11 +31,17 @@ class Save {
     return complete.future;
   }
 
-  static Image getImageFromBase64(String encoded) =>
-      Image.memory(base64.decode(encoded));
+  static Image getImageFromBase64(String encoded) => Image.memory(base64.decode(encoded));
 
   static saveMessage(String? peerNo, Map<String, dynamic> doc) {
-    storage.ready.then((ready) {
+    String? value = localStorage.getItem(peerNo!);
+    List<Map<String, dynamic>> saved = value != null ? json.decode(value) : [];
+    if (!(saved.any((_doc) => _doc[Dbkeys.timestamp] == doc[Dbkeys.timestamp]))) {
+      // Don't repeat the saved ones
+      saved.add(doc);
+      localStorage.setItem(peerNo, json.encode(saved));
+    }
+    /* storage.ready.then((ready) {
       if (ready) {
         List<Map<String, dynamic>> saved =
             storage.getItem(peerNo!)?.cast<Map<String, dynamic>>() ?? [];
@@ -44,37 +52,33 @@ class Save {
           storage.setItem(peerNo, saved);
         }
       }
-    });
+    });*/
   }
 
   static deleteMessage(String? peerNo, Map<String, dynamic> doc) {
-    storage.ready.then((ready) {
-      if (ready) {
-        List<Map<String, dynamic>> saved =
-            storage.getItem(peerNo!)?.cast<Map<String, dynamic>>() ?? [];
-        saved.removeWhere((_d) =>
-            _d[Dbkeys.timestamp] == doc[Dbkeys.timestamp] &&
-            _d[Dbkeys.content] == doc[Dbkeys.content]);
-        storage.setItem(peerNo, saved);
-      }
-    });
+    // storage.ready.then((ready) {
+    //   if (ready) {
+    String? value = localStorage.getItem(peerNo!);
+    List<Map<String, dynamic>> saved = value != null ? json.decode(value) : [];
+    saved.removeWhere((_d) => _d[Dbkeys.timestamp] == doc[Dbkeys.timestamp] && _d[Dbkeys.content] == doc[Dbkeys.content]);
+    localStorage.setItem(peerNo, json.encode(saved));
+    // }
+// });
   }
 
   static Future<List<Map<String, dynamic>>> getSavedMessages(String? peerNo) {
-    Completer<List<Map<String, dynamic>>> completer =
-        new Completer<List<Map<String, dynamic>>>();
-    storage.ready.then((ready) {
-      if (ready) {
-        completer.complete(
-            storage.getItem(peerNo!)?.cast<Map<String, dynamic>>() ?? []);
-      }
-    });
+    Completer<List<Map<String, dynamic>>> completer = new Completer<List<Map<String, dynamic>>>();
+    // storage.ready.then((ready) {
+    //   if (ready) {
+    String? value = localStorage.getItem(peerNo!);
+    completer.complete(value != null ? json.decode(value) : []);
+    // }
+    // });
     return completer.future;
   }
 
   static void saveToDisk(ImageProvider? provider, String filename) async {
-    Directory appDocDirectory =
-        await (getExternalStorageDirectory() as FutureOr<Directory>);
+    Directory appDocDirectory = await (getExternalStorageDirectory() as FutureOr<Directory>);
     Directory dir = Directory(appDocDirectory.path + '/nedo/photos');
     filename = filename.replaceAll(RegExp(r'[^\d]'), '');
     save(Function callback) {
@@ -91,12 +95,12 @@ class Save {
 
     if (provider is CachedNetworkImageProvider) {
       CachedNetworkImageProvider _cache = provider;
-      // ignore: deprecated_member_use
+// ignore: deprecated_member_use
       DefaultCacheManager().getFile(_cache.url).listen((stream) {
         _save(Directory directory) {
           stream.file.readAsBytes().then((bytes) {
-            // File f = new File(join(directory.path, '$filename.$extension'));
-            // f.writeAsBytes(bytes);
+// File f = new File(join(directory.path, '$filename.$extension'));
+// f.writeAsBytes(bytes);
           });
         }
 
@@ -104,8 +108,8 @@ class Save {
       });
     } else {
       _save(Directory directory) {
-        // File f = new File(join(directory.path, '$filename.$extension'));
-        // f.writeAsBytes(image.bytes);
+// File f = new File(join(directory.path, '$filename.$extension'));
+// f.writeAsBytes(image.bytes);
       }
 
       save(_save);

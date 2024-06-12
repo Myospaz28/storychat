@@ -1,22 +1,61 @@
-//*************   © Copyrighted by Thinkcreative_Technologies. An Exclusive item of Envato market. Make sure you have purchased a Regular License OR Extended license for the Source Code from Envato to use this product. See the License Defination attached with source code. *********************
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipic;
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:giphy_get/giphy_get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:link_preview_generator/link_preview_generator.dart';
+import 'package:media_info/media_info.dart';
+import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_compress/video_compress.dart' as compress;
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+import '/Configs/Dbkeys.dart';
+import '/Configs/Dbpaths.dart';
+import '/Configs/Enum.dart';
 import '/Configs/app_constants.dart';
 import '/Configs/optional_constants.dart';
+import '/Models/DataModel.dart';
+import '/Models/E2EE/e2ee.dart' as e2ee;
 import '/Screens/Groups/GroupDetails.dart';
 import '/Screens/Groups/widget/groupChatBubble.dart';
 import '/Screens/auth_screens/login.dart';
+import '/Screens/call_history/callhistory.dart';
 import '/Screens/calling_screen/pickup_layout.dart';
 import '/Screens/chat_screen/chat.dart';
 import '/Screens/chat_screen/utils/aes_encryption.dart';
+import '/Screens/chat_screen/utils/photo_view.dart';
 import '/Screens/chat_screen/utils/uploadMediaWithProgress.dart';
+import '/Screens/contact_screens/ContactsSelect.dart';
 import '/Screens/contact_screens/SelectContactsToForward.dart';
 import '/Screens/homepage/Setupdata.dart';
+import '/Screens/privacypolicy&TnC/PdfViewFromCachedUrl.dart';
 import '/Services/Admob/admob.dart';
-import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
 import '/Services/Providers/GroupChatProvider.dart';
 import '/Services/Providers/Observer.dart';
+import '/Services/Providers/SmartContactProviderWithLocalStoreData.dart';
+import '/Services/Providers/currentchat_peer.dart';
 import '/Services/localization/language.dart';
 import '/Services/localization/language_constants.dart';
 import '/Utils/chat_controller.dart';
@@ -24,11 +63,14 @@ import '/Utils/color_detector.dart';
 import '/Utils/custom_url_launcher.dart';
 import '/Utils/emoji_detect.dart';
 import '/Utils/mime_type.dart';
+import '/Utils/save.dart';
 import '/Utils/setStatusBarColor.dart';
 import '/Utils/theme_management.dart';
+import '/Utils/unawaited.dart';
 import '/Utils/utils.dart';
 import '/main.dart';
 import '/widgets/AllinOneCameraGalleryImageVideoPicker/AllinOneCameraGalleryImageVideoPicker.dart';
+import '/widgets/AudioRecorder/Audiorecord.dart';
 import '/widgets/CameraGalleryImagePicker/camera_image_gallery_picker.dart';
 import '/widgets/CameraGalleryImagePicker/multiMediaPicker.dart';
 import '/widgets/DownloadManager/download_all_file_type.dart';
@@ -36,50 +78,9 @@ import '/widgets/DynamicBottomSheet/dynamic_modal_bottomsheet.dart';
 import '/widgets/InfiniteList/InfiniteCOLLECTIONListViewWidget.dart';
 import '/widgets/MultiDocumentPicker/multiDocumentPicker.dart';
 import '/widgets/MyElevatedButton/MyElevatedButton.dart';
-import '/widgets/VideoEditor/video_editor.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:link_preview_generator/link_preview_generator.dart';
-import 'package:media_info/media_info.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import 'dart:async';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emojipic;
-import 'dart:convert';
-import 'dart:io';
-import '/Configs/Dbkeys.dart';
-import '/Configs/Dbpaths.dart';
-import '/Screens/privacypolicy&TnC/PdfViewFromCachedUrl.dart';
 import '/widgets/SoundPlayer/SoundPlayerPro.dart';
-import '/Services/Providers/currentchat_peer.dart';
-import '/Screens/call_history/callhistory.dart';
-import '/Screens/contact_screens/ContactsSelect.dart';
-import '/Models/DataModel.dart';
-import '/Screens/chat_screen/utils/photo_view.dart';
-import '/Utils/save.dart';
-import '/widgets/AudioRecorder/Audiorecord.dart';
+import '/widgets/VideoEditor/video_editor.dart';
 import '/widgets/VideoPicker/VideoPreview.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:giphy_get/giphy_get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
-import '/Configs/Enum.dart';
-import '/Utils/unawaited.dart';
-import '/Models/E2EE/e2ee.dart' as e2ee;
-import 'package:encrypt/encrypt.dart' as encrypt;
-import 'package:video_compress/video_compress.dart' as compress;
-import 'package:path/path.dart' as p;
 
 class GroupChatPage extends StatefulWidget {
   final String currentUserno;
@@ -92,6 +93,7 @@ class GroupChatPage extends StatefulWidget {
   final bool isSharingIntentForwarded;
   final String? sharedText;
   final bool isCurrentUserMuted;
+
   GroupChatPage({
     Key? key,
     required this.currentUserno,
@@ -110,18 +112,16 @@ class GroupChatPage extends StatefulWidget {
   _GroupChatPageState createState() => _GroupChatPageState();
 }
 
-class _GroupChatPageState extends State<GroupChatPage>
-    with WidgetsBindingObserver {
+class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserver {
   bool isgeneratingSomethingLoader = false;
+
   // int tempSendIndex = 0;
   late String messageReplyOwnerName;
   late Stream<QuerySnapshot> groupChatMessages;
-  final TextEditingController reportEditingController =
-      new TextEditingController();
+  final TextEditingController reportEditingController = new TextEditingController();
   late Query firestoreChatquery;
   GlobalKey<ScaffoldState> _scaffold = new GlobalKey<ScaffoldState>();
-  GlobalKey<State> _keyLoader =
-      new GlobalKey<State>(debugLabel: 'qqqeqeqsssaadqeqe');
+  GlobalKey<State> _keyLoader = new GlobalKey<State>(debugLabel: 'qqqeqeqsssaadqeqe');
   final ScrollController realtime = new ScrollController();
   Map<String, dynamic>? replyDoc;
   bool isReplyKeyboard = false;
@@ -131,6 +131,7 @@ class _GroupChatPageState extends State<GroupChatPage>
   int _numRewardedLoadAttempts = 0;
   bool isCurrentUserMuted = false;
   List<Map<String, dynamic>> listMapLang = [];
+
   @override
   void initState() {
     super.initState();
@@ -143,11 +144,8 @@ class _GroupChatPageState extends State<GroupChatPage>
         .orderBy(Dbkeys.groupmsgTIME, descending: true)
         .limit(maxChatMessageDocsLoadAtOnceForGroupChatAndBroadcastLazyLoading);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      var currentpeer =
-          Provider.of<CurrentChatPeer>(this.context, listen: false);
-      var firestoreProvider =
-          Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(this.context,
-              listen: false);
+      var currentpeer = Provider.of<CurrentChatPeer>(this.context, listen: false);
+      var firestoreProvider = Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(this.context, listen: false);
       final observer = Provider.of<Observer>(this.context, listen: false);
       firestoreProvider.reset();
       Future.delayed(const Duration(milliseconds: 1700), () {
@@ -156,12 +154,7 @@ class _GroupChatPageState extends State<GroupChatPage>
         currentpeer.setpeer(
             newgroupChatId: widget.groupID
                 .replaceAll(RegExp('-'), '')
-                .substring(
-                    1,
-                    widget.groupID
-                        .replaceAll(RegExp('-'), '')
-                        .toString()
-                        .length));
+                .substring(1, widget.groupID.replaceAll(RegExp('-'), '').toString().length));
 
         Future.delayed(const Duration(milliseconds: 3000), () {
           if (IsVideoAdShow == true && observer.isadmobshow == true) {
@@ -182,12 +175,8 @@ class _GroupChatPageState extends State<GroupChatPage>
     FiberchatWrapper.setLocale(this.context, _locale);
 
     Future.delayed(const Duration(milliseconds: 800), () {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .update({
-        Dbkeys.notificationStringsMap:
-            getTranslateNotificationStringsMap(this.context),
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).update({
+        Dbkeys.notificationStringsMap: getTranslateNotificationStringsMap(this.context),
       });
     });
 
@@ -200,14 +189,12 @@ class _GroupChatPageState extends State<GroupChatPage>
 
   // ignore: cancel_subscriptions
   StreamSubscription<QuerySnapshot>? subscription;
+
   loadMessagesAndListen() async {
     subscription = firestoreChatquery.snapshots().listen((snapshot) {
       snapshot.docChanges.forEach((change) {
         if (change.type == DocumentChangeType.added) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(this.context, listen: false);
           DocumentSnapshot newDoc = change.doc;
           // if (chatprovider.datalistSnapshot.length == 0) {
           // } else if ((chatprovider.checkIfDocAlreadyExits(
@@ -222,27 +209,15 @@ class _GroupChatPageState extends State<GroupChatPage>
           // }
           // }
         } else if (change.type == DocumentChangeType.modified) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(this.context, listen: false);
           DocumentSnapshot updatedDoc = change.doc;
-          if (chatprovider.checkIfDocAlreadyExits(
-                  newDoc: updatedDoc,
-                  timestamp: updatedDoc[Dbkeys.timestamp]) ==
-              true) {
+          if (chatprovider.checkIfDocAlreadyExits(newDoc: updatedDoc, timestamp: updatedDoc[Dbkeys.timestamp]) == true) {
             chatprovider.updateparticulardocinProvider(updatedDoc: updatedDoc);
           }
         } else if (change.type == DocumentChangeType.removed) {
-          var chatprovider =
-              Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(
-                  this.context,
-                  listen: false);
+          var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(this.context, listen: false);
           DocumentSnapshot deletedDoc = change.doc;
-          if (chatprovider.checkIfDocAlreadyExits(
-                  newDoc: deletedDoc,
-                  timestamp: deletedDoc[Dbkeys.groupmsgTIME]) ==
-              true) {
+          if (chatprovider.checkIfDocAlreadyExits(newDoc: deletedDoc, timestamp: deletedDoc[Dbkeys.groupmsgTIME]) == true) {
             chatprovider.deleteparticulardocinProvider(deletedDoc: deletedDoc);
           }
         }
@@ -285,8 +260,7 @@ class _GroupChatPageState extends State<GroupChatPage>
       setState(() {
         currentUploadingIndex = index;
       });
-      await getFileData(File(widget.sharedFiles![index].path),
-              timestamp: messagetime, totalFiles: widget.sharedFiles!.length)
+      await getFileData(File(widget.sharedFiles![index].path), timestamp: messagetime, totalFiles: widget.sharedFiles!.length)
           .then((imageUrl) async {
         if (imageUrl != null) {
           MessageType type = fileName.contains('.png') ||
@@ -314,21 +288,11 @@ class _GroupChatPageState extends State<GroupChatPage>
                   fileName.contains('giphy')
               ? imageUrl
               : fileName.contains('.mp4') || fileName.contains('.mov')
-                  ? imageUrl +
-                      '-BREAK-' +
-                      thumbnailurl +
-                      '-BREAK-' +
-                      videometadata
+                  ? imageUrl + '-BREAK-' + thumbnailurl + '-BREAK-' + videometadata
                   : fileName.contains('.mp3') || fileName.contains('.aac')
                       ? imageUrl + '-BREAK-' + uploadTimestamp.toString()
-                      : imageUrl +
-                          '-BREAK-' +
-                          basename(pickedFile!.path).toString();
-          onSendMessage(
-              context: this.context,
-              content: finalUrl,
-              type: type,
-              timestamp: messagetime);
+                      : imageUrl + '-BREAK-' + basename(pickedFile!.path).toString();
+          onSendMessage(context: this.context, content: finalUrl, type: type, timestamp: messagetime);
         }
       }).then((value) {
         if (widget.sharedFiles!.last == widget.sharedFiles![index]) {
@@ -347,10 +311,7 @@ class _GroupChatPageState extends State<GroupChatPage>
   }
 
   setLastSeen(bool iswillpop, isemojikeyboardopen) {
-    FirebaseFirestore.instance
-        .collection(DbPaths.collectiongroups)
-        .doc(widget.groupID)
-        .update(
+    FirebaseFirestore.instance.collection(DbPaths.collectiongroups).doc(widget.groupID).update(
       {
         widget.currentUserno: DateTime.now().millisecondsSinceEpoch,
       },
@@ -410,34 +371,23 @@ class _GroupChatPageState extends State<GroupChatPage>
       isgeneratingSomethingLoader = true;
     });
     String? path = await VideoThumbnail.thumbnailFile(
-        video: url,
-        thumbnailPath: (await getTemporaryDirectory()).path,
-        imageFormat: ImageFormat.PNG,
-        quality: 20);
+        video: url, thumbnailPath: (await getTemporaryDirectory()).path, imageFormat: ImageFormat.PNG, quality: 20);
     thumbnailFile = File(path!);
     setStateIfMounted(() {
       isgeneratingSomethingLoader = false;
     });
-    return observer.isPercentProgressShowWhileUploading
-        ? uploadFileWithProgressIndicator(true)
-        : uploadFile(true);
+    return observer.isPercentProgressShowWhileUploading ? uploadFileWithProgressIndicator(true) : uploadFile(true);
   }
 
   String? videometadata;
   int? uploadTimestamp;
   int? thumnailtimestamp;
+
   Future uploadFile(bool isthumbnail, {int? timestamp}) async {
     uploadTimestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
-    String fileName = getFileName(
-        widget.groupID,
-        isthumbnail == false
-            ? '$uploadTimestamp'
-            : '${thumnailtimestamp}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_GROUP_MEDIA/${widget.groupID}/")
-        .child(fileName);
-    TaskSnapshot uploading = await reference
-        .putFile(isthumbnail == true ? thumbnailFile! : pickedFile!);
+    String fileName = getFileName(widget.groupID, isthumbnail == false ? '$uploadTimestamp' : '${thumnailtimestamp}Thumbnail');
+    Reference reference = FirebaseStorage.instance.ref("+00_GROUP_MEDIA/${widget.groupID}/").child(fileName);
+    TaskSnapshot uploading = await reference.putFile(isthumbnail == true ? thumbnailFile! : pickedFile!);
     if (isthumbnail == false) {
       setStateIfMounted(() {
         thumnailtimestamp = uploadTimestamp;
@@ -467,16 +417,10 @@ class _GroupChatPageState extends State<GroupChatPage>
         debugPrint('ERROR SENDING MEDIA: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -489,14 +433,9 @@ class _GroupChatPageState extends State<GroupChatPage>
   }) async {
     uploadTimestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
-    String fileName = getFileName(
-        widget.currentUserno,
-        isthumbnail == false
-            ? '$uploadTimestamp'
-            : '${thumnailtimestamp}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_GROUP_MEDIA/${widget.groupID}/")
-        .child(fileName);
+    String fileName =
+        getFileName(widget.currentUserno, isthumbnail == false ? '$uploadTimestamp' : '${thumnailtimestamp}Thumbnail');
+    Reference reference = FirebaseStorage.instance.ref("+00_GROUP_MEDIA/${widget.groupID}/").child(fileName);
 
     File fileToCompress;
     File? compressedImage;
@@ -505,20 +444,15 @@ class _GroupChatPageState extends State<GroupChatPage>
       fileToCompress = File(pickedFile!.path);
       await compress.VideoCompress.setLogLevel(0);
 
-      final compress.MediaInfo? info =
-          await compress.VideoCompress.compressVideo(
+      final compress.MediaInfo? info = await compress.VideoCompress.compressVideo(
         fileToCompress.path,
-        quality: IsVideoQualityCompress == true
-            ? compress.VideoQuality.MediumQuality
-            : compress.VideoQuality.HighestQuality,
+        quality: IsVideoQualityCompress == true ? compress.VideoQuality.MediumQuality : compress.VideoQuality.HighestQuality,
         deleteOrigin: false,
         includeAudio: true,
       );
       pickedFile = File(info!.path!);
     } else if (isthumbnail == false && isImage(pickedFile!.path) == true) {
-      final targetPath = pickedFile!.absolute.path
-              .replaceAll(basename(pickedFile!.absolute.path), "") +
-          "temp.jpg";
+      final targetPath = pickedFile!.absolute.path.replaceAll(basename(pickedFile!.absolute.path), "") + "temp.jpg";
       var c = await FlutterImageCompress.compressAndGetFile(
         pickedFile!.absolute.path,
         targetPath,
@@ -547,9 +481,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     borderRadius: BorderRadius.circular(7),
                   ),
                   key: _keyLoader,
-                  backgroundColor: Thm.isDarktheme(widget.prefs)
-                      ? storychatDIALOGColorDarkMode
-                      : storychatDIALOGColorLightMode,
+                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
                   children: <Widget>[
                     Center(
                       child: StreamBuilder(
@@ -563,8 +495,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle:
                                     "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
@@ -575,8 +506,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 context: context,
                                 percent: 0.0,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle: '',
                               );
@@ -619,16 +549,10 @@ class _GroupChatPageState extends State<GroupChatPage>
         debugPrint('ERROR SENDING FILE: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -636,8 +560,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     return downloadedurl;
   }
 
-  Future uploadSelectedLocalFileWithProgressIndicator(
-      File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch,
+  Future uploadSelectedLocalFileWithProgressIndicator(File selectedFile, bool isVideo, bool isthumbnail, int timeEpoch,
       {String? filenameoptional}) async {
     String ext = p.extension(selectedFile.path);
     String fileName = filenameoptional != null
@@ -649,9 +572,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                 : 'IMG-$timeEpoch$ext';
     // String fileName = getFileName(widget.currentUserno,
     //     isthumbnail == false ? '$timeEpoch' : '${timeEpoch}Thumbnail');
-    Reference reference = FirebaseStorage.instance
-        .ref("+00_GROUP_MEDIA/${widget.groupID}/")
-        .child(fileName);
+    Reference reference = FirebaseStorage.instance.ref("+00_GROUP_MEDIA/${widget.groupID}/").child(fileName);
 
     UploadTask uploading = reference.putFile(selectedFile);
 
@@ -666,9 +587,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     borderRadius: BorderRadius.circular(7),
                   ),
                   key: _keyLoader,
-                  backgroundColor: Thm.isDarktheme(widget.prefs)
-                      ? storychatDIALOGColorDarkMode
-                      : storychatDIALOGColorLightMode,
+                  backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
                   children: <Widget>[
                     Center(
                       child: StreamBuilder(
@@ -682,8 +601,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 context: context,
                                 percent: bytesTransferred(snap) / 100,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle:
                                     "${((((snap.bytesTransferred / 1024) / 1000) * 100).roundToDouble()) / 100}/${((((snap.totalBytes / 1024) / 1000) * 100).roundToDouble()) / 100} MB",
@@ -694,8 +612,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 context: context,
                                 percent: 0.0,
                                 title: isthumbnail == true
-                                    ? getTranslated(
-                                        context, 'generatingthumbnail')
+                                    ? getTranslated(context, 'generatingthumbnail')
                                     : getTranslated(context, 'sending'),
                                 subtitle: '',
                               );
@@ -733,16 +650,10 @@ class _GroupChatPageState extends State<GroupChatPage>
         debugPrint('ERROR SENDING FILE: $onError');
       });
     } else {
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectionusers)
-          .doc(widget.currentUserno)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectionusers).doc(widget.currentUserno).set({
         Dbkeys.mssgSent: FieldValue.increment(1),
       }, SetOptions(merge: true));
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiondashboard)
-          .doc(DbPaths.docchatdata)
-          .set({
+      FirebaseFirestore.instance.collection(DbPaths.collectiondashboard).doc(DbPaths.docchatdata).set({
         Dbkeys.mediamessagessent: FieldValue.increment(1),
       }, SetOptions(merge: true));
     }
@@ -757,19 +668,13 @@ class _GroupChatPageState extends State<GroupChatPage>
       int? timestamp,
       bool? isForward = false}) async {
     final observer = Provider.of<Observer>(this.context, listen: false);
-    final List<GroupModel> groupList =
-        Provider.of<List<GroupModel>>(context, listen: false);
+    final List<GroupModel> groupList = Provider.of<List<GroupModel>>(context, listen: false);
     // var chatprovider = Provider.of<FirestoreDataProviderMESSAGESforGROUPCHAT>(
     //     this.context,
     //     listen: false);
-    Map<dynamic, dynamic> groupDoc = groupList.indexWhere(
-                (element) => element.docmap[Dbkeys.groupID] == widget.groupID) <
-            0
+    Map<dynamic, dynamic> groupDoc = groupList.indexWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID) < 0
         ? {}
-        : groupList
-            .lastWhere(
-                (element) => element.docmap[Dbkeys.groupID] == widget.groupID)
-            .docmap;
+        : groupList.lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID).docmap;
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     if (content.trim() != '') {
       content = content.trim();
@@ -796,13 +701,9 @@ class _GroupChatPageState extends State<GroupChatPage>
         Dbkeys.isForward: isForward
       }, SetOptions(merge: true));
 
-      unawaited(realtime.animateTo(0.0,
-          duration: Duration(milliseconds: 300), curve: Curves.easeOut));
+      unawaited(realtime.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut));
       // _playPopSound();
-      FirebaseFirestore.instance
-          .collection(DbPaths.collectiongroups)
-          .doc(widget.groupID)
-          .update(
+      FirebaseFirestore.instance.collection(DbPaths.collectiongroups).doc(widget.groupID).update(
         {Dbkeys.groupLATESTMESSAGETIME: timestamp},
       );
       setStateIfMounted(() {
@@ -810,22 +711,17 @@ class _GroupChatPageState extends State<GroupChatPage>
         replyDoc = null;
       });
       setStatusBarColor(widget.prefs);
-      unawaited(realtime.animateTo(0.0,
-          duration: Duration(milliseconds: 300), curve: Curves.easeOut));
+      unawaited(realtime.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut));
       if (type == MessageType.doc ||
           type == MessageType.audio ||
           // (type == MessageType.image && !content.contains('giphy')) ||
           type == MessageType.location ||
-          type == MessageType.contact &&
-              widget.isSharingIntentForwarded == false) {
-        if (IsVideoAdShow == true &&
-            observer.isadmobshow == true &&
-            IsInterstitialAdShow == false) {
+          type == MessageType.contact && widget.isSharingIntentForwarded == false) {
+        if (IsVideoAdShow == true && observer.isadmobshow == true && IsInterstitialAdShow == false) {
           Future.delayed(const Duration(milliseconds: 800), () {
             _showRewardedAd();
           });
-        } else if (IsInterstitialAdShow == true &&
-            observer.isadmobshow == true) {
+        } else if (IsInterstitialAdShow == true && observer.isadmobshow == true) {
           _showInterstitialAd();
         }
       } else if (type == MessageType.video) {
@@ -868,8 +764,7 @@ class _GroupChatPageState extends State<GroupChatPage>
       return;
     }
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
-          debugPrint('ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (InterstitialAd ad) => debugPrint('ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
@@ -914,8 +809,7 @@ class _GroupChatPageState extends State<GroupChatPage>
       return;
     }
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) =>
-          debugPrint('ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (RewardedAd ad) => debugPrint('ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         debugPrint('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
@@ -936,11 +830,9 @@ class _GroupChatPageState extends State<GroupChatPage>
   _onEmojiSelected(Emoji emoji) {
     textEditingController
       ..text += emoji.emoji
-      ..selection = TextSelection.fromPosition(
-          TextPosition(offset: textEditingController.text.length));
+      ..selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
     setStateIfMounted(() {});
-    if (textEditingController.text.isNotEmpty &&
-        textEditingController.text.length == 1) {
+    if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
       setStateIfMounted(() {});
     }
     if (textEditingController.text.isEmpty) {
@@ -951,10 +843,8 @@ class _GroupChatPageState extends State<GroupChatPage>
   _onBackspacePressed() {
     textEditingController
       ..text = textEditingController.text.characters.skipLast(1).toString()
-      ..selection = TextSelection.fromPosition(
-          TextPosition(offset: textEditingController.text.length));
-    if (textEditingController.text.isNotEmpty &&
-        textEditingController.text.length == 1) {
+      ..selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
+    if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
       setStateIfMounted(() {});
     }
     if (textEditingController.text.isEmpty) {
@@ -962,408 +852,354 @@ class _GroupChatPageState extends State<GroupChatPage>
     }
   }
 
-  final TextEditingController textEditingController =
-      new TextEditingController();
+  final TextEditingController textEditingController = new TextEditingController();
   FocusNode keyboardFocusNode = new FocusNode();
-  Widget buildInputAndroid(BuildContext context, bool isemojiShowing,
-      Function refreshThisInput, bool keyboardVisible) {
+
+  Widget buildInputAndroid(BuildContext context, bool isemojiShowing, Function refreshThisInput, bool keyboardVisible) {
     final observer = Provider.of<Observer>(context, listen: true);
 
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          isReplyKeyboard == true
-              ? buildReplyMessageForInput(
-                  context,
-                )
-              : SizedBox(),
-          Container(
-            margin: EdgeInsets.only(bottom: Platform.isIOS == true ? 20 : 0),
-            child: Row(
-              children: <Widget>[
-                Flexible(
-                  child: Container(
-                    margin: EdgeInsets.only(
-                      left: 10,
-                    ),
-                    decoration: BoxDecoration(
-                        color: storychatWhite,
-                        borderRadius: BorderRadius.all(Radius.circular(30))),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          child: IconButton(
-                            onPressed: () {
-                              refreshThisInput();
-                            },
-                            icon: Icon(Icons.emoji_emotions,
-                                color: storychatGrey, size: 23),
-                          ),
-                        ),
-                        Flexible(
-                          child: TextField(
-                            onTap: () {
-                              if (isemojiShowing == true) {
-                              } else {
-                                keyboardFocusNode.requestFocus();
-                                setStateIfMounted(() {});
-                              }
-                            },
-                            onChanged: (f) {
-                              if (textEditingController.text.isNotEmpty &&
-                                  textEditingController.text.length == 1) {
-                                setStateIfMounted(() {});
-                              }
-                              setStateIfMounted(() {});
-                            },
-                            showCursor: true,
-                            focusNode: keyboardFocusNode,
-                            maxLines: null,
-                            textCapitalization: TextCapitalization.sentences,
-                            style: TextStyle(
-                                fontSize: 16.0, color: storychatBlack),
-                            controller: textEditingController,
-                            decoration: InputDecoration(
-                              enabledBorder: OutlineInputBorder(
-                                // width: 0.0 produces a thin "hairline" border
-                                borderRadius: BorderRadius.circular(1),
-                                borderSide: BorderSide(
-                                    color: Colors.transparent, width: 1.5),
-                              ),
-                              hoverColor: Colors.transparent,
-                              focusedBorder: OutlineInputBorder(
-                                // width: 0.0 produces a thin "hairline" border
-                                borderRadius: BorderRadius.circular(1),
-                                borderSide: BorderSide(
-                                    color: Colors.transparent, width: 1.5),
-                              ),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(1),
-                                  borderSide:
-                                      BorderSide(color: Colors.transparent)),
-                              contentPadding: EdgeInsets.fromLTRB(10, 4, 7, 4),
-                              hintText: getTranslated(this.context, 'msg'),
-                              hintStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 15),
-                            ),
-                          ),
-                        ),
-                        Container(
-                            margin: EdgeInsets.fromLTRB(0, 0, 5, 0),
-                            width: textEditingController.text.isNotEmpty
-                                ? 10
-                                : IsShowGIFsenderButtonByGIPHY == false
-                                    ? 80
-                                    : 120,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                textEditingController.text.isNotEmpty
-                                    ? SizedBox()
-                                    : SizedBox(
-                                        width: 30,
-                                        child: IconButton(
-                                          icon: new Icon(
-                                            Icons.attachment_outlined,
-                                            color: storychatGrey,
-                                          ),
-                                          padding: EdgeInsets.all(0.0),
-                                          onPressed:
-                                              observer.ismediamessagingallowed ==
-                                                      false
-                                                  ? () {
-                                                      Fiberchat.showRationale(
-                                                          getTranslated(
-                                                              this.context,
-                                                              'mediamssgnotallowed'));
-                                                    }
-                                                  : () {
-                                                      hidekeyboard(context);
-                                                      shareMedia(context);
-                                                    },
-                                          color: storychatWhite,
-                                        ),
-                                      ),
-                                textEditingController.text.isNotEmpty
-                                    ? SizedBox()
-                                    : SizedBox(
-                                        width: 30,
-                                        child: IconButton(
-                                          icon: new Icon(
-                                            Icons.camera_alt_rounded,
-                                            size: 20,
-                                            color: storychatGrey,
-                                          ),
-                                          padding: EdgeInsets.all(0.0),
-                                          onPressed:
-                                              observer.ismediamessagingallowed ==
-                                                      false
-                                                  ? () {
-                                                      Fiberchat.showRationale(
-                                                          getTranslated(
-                                                              this.context,
-                                                              'mediamssgnotallowed'));
-                                                    }
-                                                  : () async {
-                                                      hidekeyboard(context);
-                                                      await Navigator.push(
-                                                          context,
-                                                          new MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  new AllinOneCameraGalleryImageVideoPicker(
-                                                                    prefs: widget
-                                                                        .prefs,
-                                                                    onTakeFile: (file,
-                                                                        isVideo,
-                                                                        thumnail) async {
-                                                                      setStatusBarColor(
-                                                                          widget
-                                                                              .prefs);
-
-                                                                      int timeStamp =
-                                                                          DateTime.now()
-                                                                              .millisecondsSinceEpoch;
-                                                                      if (isVideo ==
-                                                                          true) {
-                                                                        int timeStamp =
-                                                                            DateTime.now().millisecondsSinceEpoch;
-                                                                        String
-                                                                            videoFileext =
-                                                                            p.extension(file.path);
-                                                                        String
-                                                                            videofileName =
-                                                                            'Video-$timeStamp$videoFileext';
-                                                                        String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                            file,
-                                                                            true,
-                                                                            false,
-                                                                            timeStamp,
-                                                                            filenameoptional:
-                                                                                videofileName);
-                                                                        if (videoUrl !=
-                                                                            null) {
-                                                                          String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                              thumnail!,
-                                                                              false,
-                                                                              true,
-                                                                              timeStamp);
-                                                                          if (thumnailUrl !=
-                                                                              null) {
-                                                                            onSendMessage(
-                                                                                context: this.context,
-                                                                                content: videoUrl + '-BREAK-' + thumnailUrl + '-BREAK-' + videometadata! + '-BREAK-' + videofileName,
-                                                                                type: MessageType.video,
-                                                                                timestamp: timeStamp);
-                                                                            file.delete();
-                                                                            thumnail.delete();
-                                                                          }
-                                                                        }
-                                                                      } else {
-                                                                        String
-                                                                            imageFileext =
-                                                                            p.extension(file.path);
-                                                                        String
-                                                                            imagefileName =
-                                                                            'IMG-$timeStamp$imageFileext';
-                                                                        String? url = await uploadSelectedLocalFileWithProgressIndicator(
-                                                                            file,
-                                                                            false,
-                                                                            false,
-                                                                            timeStamp,
-                                                                            filenameoptional:
-                                                                                imagefileName);
-                                                                        if (url !=
-                                                                            null) {
-                                                                          onSendMessage(
-                                                                              context: this.context,
-                                                                              content: url,
-                                                                              type: MessageType.image,
-                                                                              timestamp: timeStamp);
-                                                                          file.delete();
-                                                                        }
-                                                                      }
-                                                                    },
-                                                                  )));
-                                                    },
-                                          color: storychatWhite,
-                                        ),
-                                      ),
-                                textEditingController.text.length != 0 ||
-                                        IsShowGIFsenderButtonByGIPHY == false
-                                    ? SizedBox(
-                                        width: 0,
-                                      )
-                                    : Container(
-                                        margin: EdgeInsets.only(bottom: 5),
-                                        height: 35,
-                                        alignment: Alignment.topLeft,
-                                        width: 40,
-                                        child: IconButton(
-                                            color: storychatWhite,
-                                            padding: EdgeInsets.all(0.0),
-                                            icon: Icon(
-                                              Icons.gif_rounded,
-                                              size: 40,
-                                              color: storychatGrey,
-                                            ),
-                                            onPressed: observer
-                                                        .ismediamessagingallowed ==
-                                                    false
-                                                ? () {
-                                                    Fiberchat.showRationale(
-                                                        getTranslated(
-                                                            this.context,
-                                                            'mediamssgnotallowed'));
-                                                  }
-                                                : () async {
-                                                    GiphyGif? gif =
-                                                        await GiphyGet.getGif(
-                                                      tabColor:
-                                                          storychatPRIMARYcolor,
-                                                      context: context,
-                                                      apiKey:
-                                                          GiphyAPIKey, //YOUR API KEY HERE
-                                                      lang:
-                                                          GiphyLanguage.english,
-                                                    );
-                                                    if (gif != null &&
-                                                        mounted) {
-                                                      onSendMessage(
-                                                        context: context,
-                                                        content: gif.images!
-                                                            .original!.url,
-                                                        type: MessageType.image,
-                                                      );
-                                                      hidekeyboard(context);
-                                                      setStateIfMounted(() {});
-                                                    }
-                                                  }),
-                                      ),
-                              ],
-                            ))
-                      ],
-                    ),
-                  ),
+    return Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+      isReplyKeyboard == true
+          ? buildReplyMessageForInput(
+              context,
+            )
+          : SizedBox(),
+      Container(
+        margin: EdgeInsets.only(bottom: Platform.isIOS == true ? 20 : 0),
+        child: Row(
+          children: <Widget>[
+            Flexible(
+              child: Container(
+                margin: EdgeInsets.only(
+                  left: 10,
                 ),
-                Container(
-                  height: 47,
-                  width: 47,
-                  // alignment: Alignment.center,
-                  margin: EdgeInsets.only(left: 6, right: 10),
-                  decoration: BoxDecoration(
-                      color: storychatSECONDARYolor,
-                      borderRadius: BorderRadius.all(Radius.circular(30))),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2.0),
-                    child: IconButton(
-                      icon: textInSendButton == ""
+                decoration: BoxDecoration(color: storychatWhite, borderRadius: BorderRadius.all(Radius.circular(30))),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: IconButton(
+                        onPressed: () {
+                          refreshThisInput();
+                        },
+                        icon: Icon(Icons.emoji_emotions, color: storychatGrey, size: 23),
+                      ),
+                    ),
+                    Flexible(
+                      child: TextField(
+                        onTap: () {
+                          if (isemojiShowing == true) {
+                          } else {
+                            keyboardFocusNode.requestFocus();
+                            setStateIfMounted(() {});
+                          }
+                        },
+                        onChanged: (f) {
+                          if (textEditingController.text.isNotEmpty && textEditingController.text.length == 1) {
+                            setStateIfMounted(() {});
+                          }
+                          setStateIfMounted(() {});
+                        },
+                        showCursor: true,
+                        focusNode: keyboardFocusNode,
+                        maxLines: null,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: TextStyle(fontSize: 16.0, color: storychatBlack),
+                        controller: textEditingController,
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            // width: 0.0 produces a thin "hairline" border
+                            borderRadius: BorderRadius.circular(1),
+                            borderSide: BorderSide(color: Colors.transparent, width: 1.5),
+                          ),
+                          hoverColor: Colors.transparent,
+                          focusedBorder: OutlineInputBorder(
+                            // width: 0.0 produces a thin "hairline" border
+                            borderRadius: BorderRadius.circular(1),
+                            borderSide: BorderSide(color: Colors.transparent, width: 1.5),
+                          ),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(1), borderSide: BorderSide(color: Colors.transparent)),
+                          contentPadding: EdgeInsets.fromLTRB(10, 4, 7, 4),
+                          hintText: getTranslated(this.context, 'msg'),
+                          hintStyle: TextStyle(color: Colors.grey, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                    Container(
+                        margin: EdgeInsets.fromLTRB(0, 0, 5, 0),
+                        width: textEditingController.text.isNotEmpty
+                            ? 10
+                            : IsShowGIFsenderButtonByGIPHY == false
+                                ? 80
+                                : 120,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            textEditingController.text.isNotEmpty
+                                ? SizedBox()
+                                : SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      icon: new Icon(
+                                        Icons.attachment_outlined,
+                                        color: storychatGrey,
+                                      ),
+                                      padding: EdgeInsets.all(0.0),
+                                      onPressed: observer.ismediamessagingallowed == false
+                                          ? () {
+                                              Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                            }
+                                          : () {
+                                              hidekeyboard(context);
+                                              shareMedia(context);
+                                            },
+                                      color: storychatWhite,
+                                    ),
+                                  ),
+                            textEditingController.text.isNotEmpty
+                                ? SizedBox()
+                                : SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      icon: new Icon(
+                                        Icons.camera_alt_rounded,
+                                        size: 20,
+                                        color: storychatGrey,
+                                      ),
+                                      padding: EdgeInsets.all(0.0),
+                                      onPressed: observer.ismediamessagingallowed == false
+                                          ? () {
+                                              Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                            }
+                                          : () async {
+                                              hidekeyboard(context);
+                                              await Navigator.push(
+                                                  context,
+                                                  new MaterialPageRoute(
+                                                      builder: (context) => new AllinOneCameraGalleryImageVideoPicker(
+                                                            prefs: widget.prefs,
+                                                            onTakeFile: (file, isVideo, thumnail) async {
+                                                              setStatusBarColor(widget.prefs);
+
+                                                              int timeStamp = DateTime.now().millisecondsSinceEpoch;
+                                                              if (isVideo == true) {
+                                                                int timeStamp = DateTime.now().millisecondsSinceEpoch;
+                                                                String videoFileext = p.extension(file.path);
+                                                                String videofileName = 'Video-$timeStamp$videoFileext';
+                                                                String? videoUrl =
+                                                                    await uploadSelectedLocalFileWithProgressIndicator(
+                                                                        file, true, false, timeStamp,
+                                                                        filenameoptional: videofileName);
+                                                                if (videoUrl != null) {
+                                                                  String? thumnailUrl =
+                                                                      await uploadSelectedLocalFileWithProgressIndicator(
+                                                                          thumnail!, false, true, timeStamp);
+                                                                  if (thumnailUrl != null) {
+                                                                    onSendMessage(
+                                                                        context: this.context,
+                                                                        content: videoUrl +
+                                                                            '-BREAK-' +
+                                                                            thumnailUrl +
+                                                                            '-BREAK-' +
+                                                                            videometadata! +
+                                                                            '-BREAK-' +
+                                                                            videofileName,
+                                                                        type: MessageType.video,
+                                                                        timestamp: timeStamp);
+                                                                    file.delete();
+                                                                    thumnail.delete();
+                                                                  }
+                                                                }
+                                                              } else {
+                                                                String imageFileext = p.extension(file.path);
+                                                                String imagefileName = 'IMG-$timeStamp$imageFileext';
+                                                                String? url = await uploadSelectedLocalFileWithProgressIndicator(
+                                                                    file, false, false, timeStamp,
+                                                                    filenameoptional: imagefileName);
+                                                                if (url != null) {
+                                                                  onSendMessage(
+                                                                      context: this.context,
+                                                                      content: url,
+                                                                      type: MessageType.image,
+                                                                      timestamp: timeStamp);
+                                                                  file.delete();
+                                                                }
+                                                              }
+                                                            },
+                                                          )));
+                                            },
+                                      color: storychatWhite,
+                                    ),
+                                  ),
+                            textEditingController.text.length != 0 || IsShowGIFsenderButtonByGIPHY == false
+                                ? SizedBox(
+                                    width: 0,
+                                  )
+                                : Container(
+                                    margin: EdgeInsets.only(bottom: 5),
+                                    height: 35,
+                                    alignment: Alignment.topLeft,
+                                    width: 40,
+                                    child: IconButton(
+                                        color: storychatWhite,
+                                        padding: EdgeInsets.all(0.0),
+                                        icon: Icon(
+                                          Icons.gif_rounded,
+                                          size: 40,
+                                          color: storychatGrey,
+                                        ),
+                                        onPressed: observer.ismediamessagingallowed == false
+                                            ? () {
+                                                Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
+                                              }
+                                            : () async {
+                                                GiphyGif? gif = await GiphyGet.getGif(
+                                                  tabColor: storychatPRIMARYcolor,
+                                                  context: context,
+                                                  apiKey: GiphyAPIKey, //YOUR API KEY HERE
+                                                  lang: GiphyLanguage.english,
+                                                );
+                                                if (gif != null && mounted) {
+                                                  onSendMessage(
+                                                    context: context,
+                                                    content: gif.images!.original!.url,
+                                                    type: MessageType.image,
+                                                  );
+                                                  hidekeyboard(context);
+                                                  setStateIfMounted(() {});
+                                                }
+                                              }),
+                                  ),
+                          ],
+                        ))
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              height: 47,
+              width: 47,
+              // alignment: Alignment.center,
+              margin: EdgeInsets.only(left: 6, right: 10),
+              decoration: BoxDecoration(color: storychatSECONDARYolor, borderRadius: BorderRadius.all(Radius.circular(30))),
+              child: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: IconButton(
+                  icon: textInSendButton == ""
+                      ? new Icon(
+                          textEditingController.text.length == 0 ? Icons.mic : Icons.send,
+                          color: storychatWhite.withOpacity(0.99),
+                        )
+                      : textEditingController.text.length == 0
                           ? new Icon(
-                              textEditingController.text.length == 0
-                                  ? Icons.mic
-                                  : Icons.send,
+                              Icons.mic,
                               color: storychatWhite.withOpacity(0.99),
                             )
-                          : textEditingController.text.length == 0
-                              ? new Icon(
-                                  Icons.mic,
-                                  color: storychatWhite.withOpacity(0.99),
-                                )
-                              : Text(
-                                  textInSendButton,
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: textInSendButton.length > 2
-                                          ? 10.7
-                                          : 17.5),
-                                ),
-                      onPressed: observer.ismediamessagingallowed == true
-                          ? textEditingController.text.isNotEmpty == false
-                              ? () {
-                                  hidekeyboard(context);
+                          : Text(
+                              textInSendButton,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: textInSendButton.length > 2 ? 10.7 : 17.5),
+                            ),
+                  onPressed: observer.ismediamessagingallowed == true
+                      ? textEditingController.text.isNotEmpty == false
+                          ? () {
+                              hidekeyboard(context);
 
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AudioRecord(
-                                                prefs: widget.prefs,
-                                                title: getTranslated(
-                                                    this.context, 'record'),
-                                                callback: getFileData,
-                                              ))).then((url) {
-                                    if (url != null) {
-                                      onSendMessage(
-                                        context: context,
-                                        content: url +
-                                            '-BREAK-' +
-                                            uploadTimestamp.toString(),
-                                        type: MessageType.audio,
-                                      );
-                                    } else {}
-                                  });
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => AudioRecord(
+                                            prefs: widget.prefs,
+                                            title: getTranslated(this.context, 'record'),
+                                            callback: getFileData,
+                                          ))).then((url) {
+                                if (url != null) {
+                                  onSendMessage(
+                                    context: context,
+                                    content: url + '-BREAK-' + uploadTimestamp.toString(),
+                                    type: MessageType.audio,
+                                  );
+                                } else {}
+                              });
+                            }
+                          : observer.istextmessagingallowed == false
+                              ? () {
+                                  Fiberchat.showRationale(getTranslated(this.context, 'textmssgnotallowed'));
                                 }
-                              : observer.istextmessagingallowed == false
-                                  ? () {
-                                      Fiberchat.showRationale(getTranslated(
-                                          this.context, 'textmssgnotallowed'));
-                                    }
-                                  : () => onSendMessage(
-                                        context: context,
-                                        content: textEditingController
-                                            .value.text
-                                            .trim(),
-                                        type: MessageType.text,
-                                      )
-                          : () {
-                              Fiberchat.showRationale(getTranslated(
-                                  this.context, 'mediamssgnotallowed'));
-                            },
-                      color: storychatWhite,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            width: double.infinity,
-            height: 60.0,
-            decoration: new BoxDecoration(
-              // border: new Border(top: new BorderSide(color: Colors.grey, width: 0.5)),
-              color: Colors.transparent,
-            ),
-          ),
-          isemojiShowing == true && keyboardVisible == false
-              ? Offstage(
-                  offstage: !isemojiShowing,
-                  child: SizedBox(
-                    height: 300,
-                    child: EmojiPicker(
-                        onEmojiSelected:
-                            (emojipic.Category category, Emoji emoji) {
-                          _onEmojiSelected(emoji);
+                              : () => onSendMessage(
+                                    context: context,
+                                    content: textEditingController.value.text.trim(),
+                                    type: MessageType.text,
+                                  )
+                      : () {
+                          Fiberchat.showRationale(getTranslated(this.context, 'mediamssgnotallowed'));
                         },
-                        onBackspacePressed: _onBackspacePressed,
-                        config: Config(
-                            columns: 7,
-                            emojiSizeMax: 32.0,
-                            verticalSpacing: 0,
-                            horizontalSpacing: 0,
-                            initCategory: emojipic.Category.RECENT,
-                            bgColor: Color(0xFFF2F2F2),
-                            indicatorColor: storychatPRIMARYcolor,
-                            iconColor: Colors.grey,
-                            iconColorSelected: storychatPRIMARYcolor,
-                            progressIndicatorColor: Colors.blue,
-                            backspaceColor: storychatPRIMARYcolor,
-                            showRecentsTab: true,
-                            recentsLimit: 28,
-                            categoryIcons: CategoryIcons(),
-                            buttonMode: ButtonMode.MATERIAL)),
+                  color: storychatWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
+        width: double.infinity,
+        height: 60.0,
+        decoration: new BoxDecoration(
+          // border: new Border(top: new BorderSide(color: Colors.grey, width: 0.5)),
+          color: Colors.transparent,
+        ),
+      ),
+      isemojiShowing == true && keyboardVisible == false
+          ? Offstage(
+              offstage: !isemojiShowing,
+              child: SizedBox(
+                height: 300,
+                child: EmojiPicker(
+                  onEmojiSelected: (emojipic.Category? category, Emoji emoji) {
+                    _onEmojiSelected(emoji);
+                  },
+                  onBackspacePressed: _onBackspacePressed,
+                  config: Config(
+                    height: 256,
+                    checkPlatformCompatibility: true,
+                    emojiViewConfig: EmojiViewConfig(
+                        // Issue: https://github.com/flutter/flutter/issues/28894
+                        emojiSizeMax: 28 * (foundation.defaultTargetPlatform == TargetPlatform.iOS ? 1.20 : 1.0),
+                        backgroundColor: const Color(0xFFF2F2F2)),
+                    swapCategoryAndBottomBar: false,
+                    skinToneConfig: const SkinToneConfig(),
+                    categoryViewConfig:  CategoryViewConfig(
+                      initCategory: emojipic.Category.RECENT,
+                      indicatorColor: storychatPRIMARYcolor,
+                      iconColor: Colors.grey,
+                      iconColorSelected: storychatPRIMARYcolor,
+                      backspaceColor: storychatPRIMARYcolor,
+                    ),
+                    bottomActionBarConfig: const BottomActionBarConfig(),
+                    searchViewConfig: const SearchViewConfig(),
                   ),
-                )
-              : SizedBox(),
-        ]);
+                  /*config: Config(
+                      columns: 7,
+                      emojiSizeMax: 32.0,
+                      verticalSpacing: 0,
+                      horizontalSpacing: 0,
+                      initCategory: emojipic.Category.RECENT,
+                      bgColor: Color(0xFFF2F2F2),
+                      indicatorColor: storychatPRIMARYcolor,
+                      iconColor: Colors.grey,
+                      iconColorSelected: storychatPRIMARYcolor,
+                      progressIndicatorColor: Colors.blue,
+                      backspaceColor: storychatPRIMARYcolor,
+                      showRecentsTab: true,
+                      recentsLimit: 28,
+                      categoryIcons: CategoryIcons(),
+                      buttonMode: ButtonMode.MATERIAL),*/
+                ),
+              ),
+            )
+          : SizedBox(),
+    ]);
   }
 
   // Widget buildInputAndroid(
@@ -1829,23 +1665,17 @@ class _GroupChatPageState extends State<GroupChatPage>
       child: Container(
           height: 80,
           margin: EdgeInsets.only(left: 15, right: 70),
-          decoration: BoxDecoration(
-              color: storychatWhite,
-              borderRadius: BorderRadius.all(Radius.circular(10))),
+          decoration: BoxDecoration(color: storychatWhite, borderRadius: BorderRadius.all(Radius.circular(10))),
           child: Stack(
             children: [
               Container(
                   margin: EdgeInsetsDirectional.all(4),
-                  decoration: BoxDecoration(
-                      color: storychatGrey.withOpacity(0.1),
-                      borderRadius: BorderRadius.all(Radius.circular(8))),
+                  decoration:
+                      BoxDecoration(color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
                   child: Row(children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: replyDoc![Dbkeys.groupmsgSENDBY] ==
-                                widget.currentUserno
-                            ? storychatPRIMARYcolor
-                            : Colors.purple,
+                        color: replyDoc![Dbkeys.groupmsgSENDBY] == widget.currentUserno ? storychatPRIMARYcolor : Colors.purple,
                         borderRadius: BorderRadius.only(
                             topRight: Radius.circular(0),
                             bottomRight: Radius.circular(0),
@@ -1867,15 +1697,13 @@ class _GroupChatPageState extends State<GroupChatPage>
                           Padding(
                             padding: EdgeInsets.only(right: 30),
                             child: Text(
-                              replyDoc![Dbkeys.groupmsgSENDBY] ==
-                                      widget.currentUserno
+                              replyDoc![Dbkeys.groupmsgSENDBY] == widget.currentUserno
                                   ? getTranslated(this.context, 'you')
                                   : messageReplyOwnerName,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: replyDoc![Dbkeys.groupmsgSENDBY] ==
-                                          widget.currentUserno
+                                  color: replyDoc![Dbkeys.groupmsgSENDBY] == widget.currentUserno
                                       ? storychatPRIMARYcolor
                                       : Colors.purple),
                             ),
@@ -1883,23 +1711,19 @@ class _GroupChatPageState extends State<GroupChatPage>
                           SizedBox(
                             height: 8,
                           ),
-                          replyDoc![Dbkeys.messageType] ==
-                                  MessageType.text.index
+                          replyDoc![Dbkeys.messageType] == MessageType.text.index
                               ? Text(
                                   replyDoc![Dbkeys.content],
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 2,
                                   style: TextStyle(color: storychatBlack),
                                 )
-                              : replyDoc![Dbkeys.messageType] ==
-                                      MessageType.doc.index
+                              : replyDoc![Dbkeys.messageType] == MessageType.doc.index
                                   ? Container(
-                                      width: MediaQuery.of(context).size.width -
-                                          125,
+                                      width: MediaQuery.of(context).size.width - 125,
                                       padding: const EdgeInsets.only(right: 55),
                                       child: Text(
-                                        replyDoc![Dbkeys.content]
-                                            .split('-BREAK-')[1],
+                                        replyDoc![Dbkeys.content].split('-BREAK-')[1],
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 2,
                                       ),
@@ -1907,33 +1731,17 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   : Text(
                                       getTranslated(
                                           this.context,
-                                          replyDoc![Dbkeys.messageType] ==
-                                                  MessageType.image.index
+                                          replyDoc![Dbkeys.messageType] == MessageType.image.index
                                               ? 'nim'
-                                              : replyDoc![Dbkeys.messageType] ==
-                                                      MessageType.video.index
+                                              : replyDoc![Dbkeys.messageType] == MessageType.video.index
                                                   ? 'nvm'
-                                                  : replyDoc![Dbkeys
-                                                              .messageType] ==
-                                                          MessageType
-                                                              .audio.index
+                                                  : replyDoc![Dbkeys.messageType] == MessageType.audio.index
                                                       ? 'nam'
-                                                      : replyDoc![Dbkeys
-                                                                  .messageType] ==
-                                                              MessageType
-                                                                  .contact.index
+                                                      : replyDoc![Dbkeys.messageType] == MessageType.contact.index
                                                           ? 'ncm'
-                                                          : replyDoc![Dbkeys
-                                                                      .messageType] ==
-                                                                  MessageType
-                                                                      .location
-                                                                      .index
+                                                          : replyDoc![Dbkeys.messageType] == MessageType.location.index
                                                               ? 'nlm'
-                                                              : replyDoc![Dbkeys
-                                                                          .messageType] ==
-                                                                      MessageType
-                                                                          .doc
-                                                                          .index
+                                                              : replyDoc![Dbkeys.messageType] == MessageType.doc.index
                                                                   ? 'ndm'
                                                                   : ''),
                                       overflow: TextOverflow.ellipsis,
@@ -1965,17 +1773,10 @@ class _GroupChatPageState extends State<GroupChatPage>
                               child: CachedNetworkImage(
                                 placeholder: (context, url) => Container(
                                   child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        storychatSECONDARYolor),
+                                    valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor),
                                   ),
-                                  width: replyDoc![Dbkeys.content]
-                                          .contains('giphy')
-                                      ? 60
-                                      : 60.0,
-                                  height: replyDoc![Dbkeys.content]
-                                          .contains('giphy')
-                                      ? 60
-                                      : 60.0,
+                                  width: replyDoc![Dbkeys.content].contains('giphy') ? 60 : 60.0,
+                                  height: replyDoc![Dbkeys.content].contains('giphy') ? 60 : 60.0,
                                   padding: EdgeInsets.all(8.0),
                                   decoration: BoxDecoration(
                                     color: Colors.blueGrey[200],
@@ -1996,10 +1797,8 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   ),
                                   clipBehavior: Clip.hardEdge,
                                 ),
-                                imageUrl: replyDoc![Dbkeys.messageType] ==
-                                        MessageType.video.index
-                                    ? ''
-                                    : replyDoc![Dbkeys.content],
+                                imageUrl:
+                                    replyDoc![Dbkeys.messageType] == MessageType.video.index ? '' : replyDoc![Dbkeys.content],
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
@@ -2028,29 +1827,21 @@ class _GroupChatPageState extends State<GroupChatPage>
                                         child: Stack(
                                           children: [
                                             CachedNetworkImage(
-                                              placeholder: (context, url) =>
-                                                  Container(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                              Color>(
-                                                          storychatSECONDARYolor),
+                                              placeholder: (context, url) => Container(
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor),
                                                 ),
                                                 width: 84,
                                                 height: 84,
                                                 padding: EdgeInsets.all(8.0),
                                                 decoration: BoxDecoration(
                                                   color: Colors.blueGrey[200],
-                                                  borderRadius:
-                                                      BorderRadius.all(
+                                                  borderRadius: BorderRadius.all(
                                                     Radius.circular(0.0),
                                                   ),
                                                 ),
                                               ),
-                                              errorWidget:
-                                                  (context, str, error) =>
-                                                      Material(
+                                              errorWidget: (context, str, error) => Material(
                                                 child: Image.asset(
                                                   'assets/images/img_not_available.jpeg',
                                                   width: 60,
@@ -2062,25 +1853,18 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                 ),
                                                 clipBehavior: Clip.hardEdge,
                                               ),
-                                              imageUrl:
-                                                  replyDoc![Dbkeys.content]
-                                                      .split('-BREAK-')[1],
+                                              imageUrl: replyDoc![Dbkeys.content].split('-BREAK-')[1],
                                               width: 84,
                                               height: 84,
                                               fit: BoxFit.cover,
                                             ),
                                             Container(
-                                              color:
-                                                  Colors.black.withOpacity(0.4),
+                                              color: Colors.black.withOpacity(0.4),
                                               height: 84,
                                               width: 84,
                                             ),
                                             Center(
-                                              child: Icon(
-                                                  Icons
-                                                      .play_circle_fill_outlined,
-                                                  color: Colors.white70,
-                                                  size: 25),
+                                              child: Icon(Icons.play_circle_fill_outlined, color: Colors.white70, size: 25),
                                             ),
                                           ],
                                         ),
@@ -2099,48 +1883,27 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           topLeft: Radius.circular(0),
                                           bottomLeft: Radius.circular(0)),
                                       child: Container(
-                                          color: replyDoc![
-                                                      Dbkeys.messageType] ==
-                                                  MessageType.doc.index
+                                          color: replyDoc![Dbkeys.messageType] == MessageType.doc.index
                                               ? Colors.yellow[00]
-                                              : replyDoc![Dbkeys.messageType] ==
-                                                      MessageType.audio.index
+                                              : replyDoc![Dbkeys.messageType] == MessageType.audio.index
                                                   ? storychatGreenColor400
-                                                  : replyDoc![Dbkeys
-                                                              .messageType] ==
-                                                          MessageType
-                                                              .location.index
+                                                  : replyDoc![Dbkeys.messageType] == MessageType.location.index
                                                       ? Colors.red[700]
-                                                      : replyDoc![Dbkeys
-                                                                  .messageType] ==
-                                                              MessageType
-                                                                  .contact.index
+                                                      : replyDoc![Dbkeys.messageType] == MessageType.contact.index
                                                           ? Colors.blue[400]
                                                           : Colors.cyan[700],
                                           height: 84,
                                           width: 84,
                                           child: Icon(
-                                            replyDoc![Dbkeys.messageType] ==
-                                                    MessageType.doc.index
+                                            replyDoc![Dbkeys.messageType] == MessageType.doc.index
                                                 ? Icons.insert_drive_file
-                                                : replyDoc![Dbkeys
-                                                            .messageType] ==
-                                                        MessageType.audio.index
+                                                : replyDoc![Dbkeys.messageType] == MessageType.audio.index
                                                     ? Icons.mic_rounded
-                                                    : replyDoc![Dbkeys
-                                                                .messageType] ==
-                                                            MessageType
-                                                                .location.index
+                                                    : replyDoc![Dbkeys.messageType] == MessageType.location.index
                                                         ? Icons.location_on
-                                                        : replyDoc![Dbkeys
-                                                                    .messageType] ==
-                                                                MessageType
-                                                                    .contact
-                                                                    .index
-                                                            ? Icons
-                                                                .contact_page_sharp
-                                                            : Icons
-                                                                .insert_drive_file,
+                                                        : replyDoc![Dbkeys.messageType] == MessageType.contact.index
+                                                            ? Icons.contact_page_sharp
+                                                            : Icons.insert_drive_file,
                                             color: Colors.white,
                                             size: 35,
                                           ))))),
@@ -2179,62 +1942,46 @@ class _GroupChatPageState extends State<GroupChatPage>
     if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationAddedUser) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
-          doc[Dbkeys.groupmsgLISToptional].contains(widget.currentUserno) &&
-                  doc[Dbkeys.groupmsgLISToptional].length > 1
-              ? doc[Dbkeys.groupmsgLISToptional]
-                      .contains(groupData.docmap[Dbkeys.groupCREATEDBY])
-                  ? widget.currentUserno ==
-                          groupData.docmap[Dbkeys.groupCREATEDBY]
+          doc[Dbkeys.groupmsgLISToptional].contains(widget.currentUserno) && doc[Dbkeys.groupmsgLISToptional].length > 1
+              ? doc[Dbkeys.groupmsgLISToptional].contains(groupData.docmap[Dbkeys.groupCREATEDBY])
+                  ? widget.currentUserno == groupData.docmap[Dbkeys.groupCREATEDBY]
                       ? '${getTranslated(this.context, 'uhaveadded')} ${doc[Dbkeys.groupmsgLISToptional].length - 1} ${getTranslated(this.context, 'users')} '
                       : '${getTranslated(this.context, 'adminahasadded')} ${getTranslated(this.context, 'youandother')} ${doc[Dbkeys.groupmsgLISToptional].length - 1} ${getTranslated(this.context, 'users')}'
                   : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'added')} ${getTranslated(this.context, 'youandother')} ${doc[Dbkeys.groupmsgLISToptional].length - 1} ${getTranslated(this.context, 'users')}'
-              : doc[Dbkeys.groupmsgLISToptional]
-                          .contains(widget.currentUserno) &&
-                      doc[Dbkeys.groupmsgLISToptional].length == 1
+              : doc[Dbkeys.groupmsgLISToptional].contains(widget.currentUserno) && doc[Dbkeys.groupmsgLISToptional].length == 1
                   ? '${getTranslated(this.context, 'youareaddedtothisgrp')}'
-                  : !doc[Dbkeys.groupmsgLISToptional]
-                              .contains(widget.currentUserno) &&
+                  : !doc[Dbkeys.groupmsgLISToptional].contains(widget.currentUserno) &&
                           doc[Dbkeys.groupmsgLISToptional].length == 1
-                      ? doc[Dbkeys.groupmsgSENDBY] ==
-                              groupData.docmap[Dbkeys.groupCREATEDBY]
-                          ? widget.currentUserno ==
-                                  groupData.docmap[Dbkeys.groupCREATEDBY]
+                      ? doc[Dbkeys.groupmsgSENDBY] == groupData.docmap[Dbkeys.groupCREATEDBY]
+                          ? widget.currentUserno == groupData.docmap[Dbkeys.groupCREATEDBY]
                               ? '${getTranslated(this.context, 'uhaveadded')} ${doc[Dbkeys.groupmsgLISToptional][0]}'
                               : '${getTranslated(this.context, 'adminhasadded')} ${doc[Dbkeys.groupmsgLISToptional][0]}'
                           : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'adminhasadded')} ${doc[Dbkeys.groupmsgLISToptional][0]}'
-                      : doc[Dbkeys.groupmsgSENDBY] ==
-                              groupData.docmap[Dbkeys.groupCREATEDBY]
+                      : doc[Dbkeys.groupmsgSENDBY] == groupData.docmap[Dbkeys.groupCREATEDBY]
                           ? '${getTranslated(this.context, 'adminahasadded')} ${doc[Dbkeys.groupmsgLISToptional].length} ${getTranslated(this.context, 'users')}'
                           : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'added')} ${doc[Dbkeys.groupmsgLISToptional].length} ${getTranslated(this.context, 'users')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationCreatedGroup) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationCreatedGroup) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           groupData.docmap[Dbkeys.groupCREATEDBY].contains(widget.currentUserno)
               ? getTranslated(this.context, 'youcreatedthisgroup')
               : '${groupData.docmap[Dbkeys.groupCREATEDBY]} ${getTranslated(this.context, 'hascreatedthisgroup')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationUpdatedGroupDetails) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationUpdatedGroupDetails) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
@@ -2243,16 +1990,13 @@ class _GroupChatPageState extends State<GroupChatPage>
                       .contains(groupData.docmap[Dbkeys.groupCREATEDBY])
                   ? getTranslated(this.context, 'grpdetailsupdatebyadmin')
                   : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hasupdatedgrpdetails')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationUserSetAsAdmin) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationUserSetAsAdmin) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
@@ -2260,16 +2004,13 @@ class _GroupChatPageState extends State<GroupChatPage>
               : doc[Dbkeys.groupmsgLISToptional][0] == widget.currentUserno
                   ? '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hvsetuasadsmin')}'
                   : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'set')} ${doc[Dbkeys.groupmsgLISToptional][0]} ${getTranslated(this.context, 'asadmin')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationUserRemovedAsAdmin) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationUserRemovedAsAdmin) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
@@ -2277,71 +2018,57 @@ class _GroupChatPageState extends State<GroupChatPage>
               : doc[Dbkeys.groupmsgLISToptional][0] == widget.currentUserno
                   ? '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'theyremoveduasadmin')}'
                   : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hasremoved')} ${doc[Dbkeys.groupmsgLISToptional][0]} ${getTranslated(this.context, 'fromadmin')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationUpdatedGroupicon) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationUpdatedGroupicon) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
               ? getTranslated(this.context, 'youupdatedgrpicon')
               : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hasupdatedgrpicon')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationDeletedGroupicon) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationDeletedGroupicon) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
               ? getTranslated(this.context, 'youremovedgrpicon')
               : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hasremovedgrpicon')}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationRemovedUser) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationRemovedUser) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgCONTENT].contains('by ' + widget.currentUserno)
               ? '${getTranslated(this.context, 'youhaveremoved')} ${doc[Dbkeys.groupmsgLISToptional][0]}'
-              : doc[Dbkeys.groupmsgSENDBY] ==
-                      groupData.docmap[Dbkeys.groupCREATEDBY]
+              : doc[Dbkeys.groupmsgSENDBY] == groupData.docmap[Dbkeys.groupCREATEDBY]
                   ? '${doc[Dbkeys.groupmsgLISToptional][0]} ${getTranslated(this.context, 'removedbyadmin')}'
                   : '${doc[Dbkeys.groupmsgSENDBY]} ${getTranslated(this.context, 'hasremoved')} ${doc[Dbkeys.groupmsgLISToptional][0]}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
-    } else if (doc[Dbkeys.groupmsgTYPE] ==
-        Dbkeys.groupmsgTYPEnotificationUserLeft) {
+    } else if (doc[Dbkeys.groupmsgTYPE] == Dbkeys.groupmsgTYPEnotificationUserLeft) {
       return Center(
           child: Chip(
-        labelStyle: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         backgroundColor: Colors.blueGrey[50],
         label: Text(
           doc[Dbkeys.groupmsgCONTENT].contains(widget.currentUserno)
               ? getTranslated(this.context, 'youleftthegroup')
               : '${doc[Dbkeys.groupmsgCONTENT]}',
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Colors.black87),
         ),
       ));
     } else if (doc[Dbkeys.groupmsgTYPE] == MessageType.image.index ||
@@ -2368,22 +2095,16 @@ class _GroupChatPageState extends State<GroupChatPage>
 
   onDismiss(Map<String, dynamic> doc) {
     if ((doc[Dbkeys.content] == '' || doc[Dbkeys.content] == null) == false) {
-      final contactsProvider =
-          Provider.of<SmartContactProviderWithLocalStoreData>(this.context,
-              listen: false);
+      final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(this.context, listen: false);
       setStateIfMounted(() {
         isReplyKeyboard = true;
         replyDoc = doc;
-        messageReplyOwnerName = contactsProvider
-                    .alreadyJoinedSavedUsersPhoneNameAsInServer
-                    .indexWhere((element) =>
-                        element.phone == doc[Dbkeys.groupmsgSENDBY]) >=
+        messageReplyOwnerName = contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                    .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY]) >=
                 0
             ? contactsProvider
-                    .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider
-                        .alreadyJoinedSavedUsersPhoneNameAsInServer
-                        .indexWhere((element) =>
-                            element.phone == doc[Dbkeys.groupmsgSENDBY])]
+                    .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                        .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY])]
                     .name ??
                 doc[Dbkeys.groupmsgSENDBY].toString()
             : doc[Dbkeys.groupmsgSENDBY].toString();
@@ -2397,8 +2118,7 @@ class _GroupChatPageState extends State<GroupChatPage>
   late encrypt.Encrypter cryptor;
   final iv = encrypt.IV.fromLength(8);
 
-  contextMenu(BuildContext context, Map<String, dynamic> mssgDoc,
-      {bool saved = false}) {
+  contextMenu(BuildContext context, Map<String, dynamic> mssgDoc, {bool saved = false}) {
     List<Widget> tiles = List.from(<Widget>[]);
 
     if (mssgDoc[Dbkeys.groupmsgSENDBY] == widget.currentUserno) {
@@ -2412,9 +2132,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: pickTextColorBasedOnBgColorAdvanced(
-                      Thm.isDarktheme(widget.prefs)
-                          ? storychatDIALOGColorDarkMode
-                          : storychatDIALOGColorLightMode),
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
@@ -2422,37 +2140,20 @@ class _GroupChatPageState extends State<GroupChatPage>
                 if (mssgDoc[Dbkeys.messageType] == MessageType.image.index &&
                     !mssgDoc[Dbkeys.groupmsgCONTENT].contains('giphy')) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT]).delete();
                   } catch (e) {}
-                } else if (mssgDoc[Dbkeys.messageType] ==
-                    MessageType.doc.index) {
+                } else if (mssgDoc[Dbkeys.messageType] == MessageType.doc.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0]).delete();
                   } catch (e) {}
-                } else if (mssgDoc[Dbkeys.messageType] ==
-                    MessageType.audio.index) {
+                } else if (mssgDoc[Dbkeys.messageType] == MessageType.audio.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0]).delete();
                   } catch (e) {}
-                } else if (mssgDoc[Dbkeys.messageType] ==
-                    MessageType.video.index) {
+                } else if (mssgDoc[Dbkeys.messageType] == MessageType.video.index) {
                   try {
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0])
-                        .delete();
-                    await FirebaseStorage.instance
-                        .refFromURL(
-                            mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[1])
-                        .delete();
+                    await FirebaseStorage.instance.refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[0]).delete();
+                    await FirebaseStorage.instance.refFromURL(mssgDoc[Dbkeys.groupmsgCONTENT].split('-BREAK-')[1]).delete();
                   } catch (e) {}
                 }
                 if (deleteMessaqgeForEveryoneDeleteFromServer == true) {
@@ -2460,16 +2161,14 @@ class _GroupChatPageState extends State<GroupChatPage>
                       .collection(DbPaths.collectiongroups)
                       .doc(widget.groupID)
                       .collection(DbPaths.collectiongroupChats)
-                      .doc(
-                          '${mssgDoc[Dbkeys.groupmsgTIME]}--${mssgDoc[Dbkeys.groupmsgSENDBY]}')
+                      .doc('${mssgDoc[Dbkeys.groupmsgTIME]}--${mssgDoc[Dbkeys.groupmsgSENDBY]}')
                       .delete();
                 } else {
                   await FirebaseFirestore.instance
                       .collection(DbPaths.collectiongroups)
                       .doc(widget.groupID)
                       .collection(DbPaths.collectiongroupChats)
-                      .doc(
-                          '${mssgDoc[Dbkeys.groupmsgTIME]}--${mssgDoc[Dbkeys.groupmsgSENDBY]}')
+                      .doc('${mssgDoc[Dbkeys.groupmsgTIME]}--${mssgDoc[Dbkeys.groupmsgSENDBY]}')
                       .update({
                     Dbkeys.groupmsgISDELETED: true,
                     Dbkeys.groupmsgCONTENT: '',
@@ -2488,9 +2187,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: pickTextColorBasedOnBgColorAdvanced(
-                      Thm.isDarktheme(widget.prefs)
-                          ? storychatDIALOGColorDarkMode
-                          : storychatDIALOGColorLightMode),
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
@@ -2511,11 +2208,9 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   // tempSendIndex = 0;
                                 });
 
-                                String? privateKey =
-                                    await storage.read(key: Dbkeys.privateKey);
+                                String? privateKey = await storage.read(key: Dbkeys.privateKey);
 
-                                await sendForwardMessageEach(
-                                    0, selectedlist, privateKey!, mssgDoc);
+                                await sendForwardMessageEach(0, selectedlist, privateKey!, mssgDoc);
                               }
                             })));
               })));
@@ -2530,33 +2225,22 @@ class _GroupChatPageState extends State<GroupChatPage>
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: pickTextColorBasedOnBgColorAdvanced(
-                      Thm.isDarktheme(widget.prefs)
-                          ? storychatDIALOGColorDarkMode
-                          : storychatDIALOGColorLightMode),
+                      Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
                 ),
               ),
               onTap: () async {
                 Navigator.of(context).pop();
-                final contactsProvider =
-                    Provider.of<SmartContactProviderWithLocalStoreData>(
-                        this.context,
-                        listen: false);
+                final contactsProvider = Provider.of<SmartContactProviderWithLocalStoreData>(this.context, listen: false);
                 setStateIfMounted(() {
                   isReplyKeyboard = true;
                   replyDoc = mssgDoc;
-                  messageReplyOwnerName = contactsProvider
-                              .alreadyJoinedSavedUsersPhoneNameAsInServer
-                              .indexWhere((element) =>
-                                  element.phone ==
-                                  mssgDoc[Dbkeys.groupmsgSENDBY]) >=
+                  messageReplyOwnerName = contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                              .indexWhere((element) => element.phone == mssgDoc[Dbkeys.groupmsgSENDBY]) >=
                           0
                       ? contactsProvider
-                              .alreadyJoinedSavedUsersPhoneNameAsInServer[
-                                  contactsProvider
-                                      .alreadyJoinedSavedUsersPhoneNameAsInServer
-                                      .indexWhere((element) =>
-                                          element.phone ==
-                                          mssgDoc[Dbkeys.groupmsgSENDBY])]
+                              .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider
+                                  .alreadyJoinedSavedUsersPhoneNameAsInServer
+                                  .indexWhere((element) => element.phone == mssgDoc[Dbkeys.groupmsgSENDBY])]
                               .name ??
                           mssgDoc[Dbkeys.groupmsgSENDBY].toString()
                       : mssgDoc[Dbkeys.groupmsgSENDBY].toString();
@@ -2580,13 +2264,10 @@ class _GroupChatPageState extends State<GroupChatPage>
               onTap: () async {
                 Navigator.of(popable).pop();
 
-                var v = await Fiberchat.translateString(
-                    mssgDoc[Dbkeys.groupmsgCONTENT], widget.prefs);
+                var v = await Fiberchat.translateString(mssgDoc[Dbkeys.groupmsgCONTENT], widget.prefs);
                 if (v != mssgDoc[Dbkeys.groupmsgCONTENT]) {
-                  await widget.prefs.setString(
-                      '${mssgDoc[Dbkeys.groupmsgTIME]}-trns', v.toString());
-                  listMapLang.add(
-                      {'${mssgDoc[Dbkeys.groupmsgTIME]}-trns': v.toString()});
+                  await widget.prefs.setString('${mssgDoc[Dbkeys.groupmsgTIME]}-trns', v.toString());
+                  listMapLang.add({'${mssgDoc[Dbkeys.groupmsgTIME]}-trns': v.toString()});
                   setStateIfMounted(() {});
                 }
               })));
@@ -2621,21 +2302,14 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 child: Container(
                                   margin: EdgeInsets.all(14),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Text(
-                                        IsShowLanguageNameInNativeLanguage ==
-                                                true
+                                        IsShowLanguageNameInNativeLanguage == true
                                             ? e.flag + ' ' + '    ' + e.name
-                                            : e.flag +
-                                                ' ' +
-                                                '    ' +
-                                                e.languageNameInEnglish,
+                                            : e.flag + ' ' + '    ' + e.languageNameInEnglish,
                                         style: TextStyle(
-                                            color: Thm.isDarktheme(widget.prefs)
-                                                ? storychatWhite
-                                                : storychatBlack,
+                                            color: Thm.isDarktheme(widget.prefs) ? storychatWhite : storychatBlack,
                                             fontWeight: FontWeight.w500,
                                             fontSize: 16),
                                       ),
@@ -2643,9 +2317,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           ? SizedBox()
                                           : Icon(
                                               Icons.done,
-                                              color: e.languageCode ==
-                                                      widget.prefs.getString(
-                                                          LAGUAGE_CODE)
+                                              color: e.languageCode == widget.prefs.getString(LAGUAGE_CODE)
                                                   ? storychatSECONDARYolor
                                                   : Colors.transparent,
                                             )
@@ -2667,15 +2339,12 @@ class _GroupChatPageState extends State<GroupChatPage>
         context: this.context,
         builder: (context) {
           return SimpleDialog(
-              backgroundColor: Thm.isDarktheme(widget.prefs)
-                  ? storychatDIALOGColorDarkMode
-                  : storychatDIALOGColorLightMode,
+              backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
               children: tiles);
         });
   }
 
-  sendForwardMessageEach(
-      int index, List<dynamic> list, String privateKey, var mssgDoc) async {
+  sendForwardMessageEach(int index, List<dynamic> list, String privateKey, var mssgDoc) async {
     if (index >= list.length) {
       setStateIfMounted(() {
         isgeneratingSomethingLoader = false;
@@ -2708,13 +2377,9 @@ class _GroupChatPageState extends State<GroupChatPage>
             Dbkeys.replyToMsgDoc: null,
             Dbkeys.isForward: true
           }, SetOptions(merge: true)).then((value) {
-            unawaited(realtime.animateTo(0.0,
-                duration: Duration(milliseconds: 300), curve: Curves.easeOut));
+            unawaited(realtime.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut));
             // _playPopSound();
-            FirebaseFirestore.instance
-                .collection(DbPaths.collectiongroups)
-                .doc(groupDoc[Dbkeys.groupID])
-                .update(
+            FirebaseFirestore.instance.collection(DbPaths.collectiongroups).doc(groupDoc[Dbkeys.groupID]).update(
               {Dbkeys.groupLATESTMESSAGETIME: timestamp},
             );
           }).then((value) async {
@@ -2727,8 +2392,7 @@ class _GroupChatPageState extends State<GroupChatPage>
               });
               Navigator.of(this.context).pop();
             } else {
-              await sendForwardMessageEach(
-                  index + 1, list, privateKey, mssgDoc);
+              await sendForwardMessageEach(index + 1, list, privateKey, mssgDoc);
             }
           });
         } catch (e) {
@@ -2740,8 +2404,7 @@ class _GroupChatPageState extends State<GroupChatPage>
       } else {
         try {
           String? sharedSecret = (await e2ee.X25519().calculateSharedSecret(
-                  e2ee.Key.fromBase64(privateKey, false),
-                  e2ee.Key.fromBase64(list[index][Dbkeys.publicKey], true)))
+                  e2ee.Key.fromBase64(privateKey, false), e2ee.Key.fromBase64(list[index][Dbkeys.publicKey], true)))
               .toBase64();
           final key = encrypt.Key.fromBase64(sharedSecret);
           cryptor = new encrypt.Encrypter(encrypt.Salsa20(key));
@@ -2750,21 +2413,13 @@ class _GroupChatPageState extends State<GroupChatPage>
           if (encrypted is String) {
             int timestamp2 = DateTime.now().millisecondsSinceEpoch;
             if (content.trim() != '') {
-              Map<String, dynamic>? targetPeer =
-                  widget.model.userData[list[index][Dbkeys.username]];
+              Map<String, dynamic>? targetPeer = widget.model.userData[list[index][Dbkeys.username]];
               if (targetPeer == null) {
-                await ChatController.request(
-                    widget.currentUserno,
-                    list[index][Dbkeys.username],
-                    Fiberchat.getChatId(
-                        widget.currentUserno, list[index][Dbkeys.username]));
+                await ChatController.request(widget.currentUserno, list[index][Dbkeys.username],
+                    Fiberchat.getChatId(widget.currentUserno, list[index][Dbkeys.username]));
               }
-              var chatId = Fiberchat.getChatId(
-                  widget.currentUserno, list[index][Dbkeys.username]);
-              await FirebaseFirestore.instance
-                  .collection(DbPaths.collectionmessages)
-                  .doc(chatId)
-                  .set({
+              var chatId = Fiberchat.getChatId(widget.currentUserno, list[index][Dbkeys.username]);
+              await FirebaseFirestore.instance.collection(DbPaths.collectionmessages).doc(chatId).set({
                 widget.currentUserno: true,
                 list[index][Dbkeys.username]: list[index][Dbkeys.lastSeen],
               }, SetOptions(merge: true)).then((value) async {
@@ -2776,8 +2431,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     .set({
                   widget.currentUserno: 4,
                 }, SetOptions(merge: true));
-                widget.model.addMessage(
-                    list[index][Dbkeys.username], timestamp2, messaging);
+                widget.model.addMessage(list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
                 Future messaging = FirebaseFirestore.instance
                     .collection(DbPaths.collectionmessages)
@@ -2799,8 +2453,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   Dbkeys.latestEncrypted: true,
                   Dbkeys.isMuted: false,
                 }, SetOptions(merge: true));
-                widget.model.addMessage(
-                    list[index][Dbkeys.username], timestamp2, messaging);
+                widget.model.addMessage(list[index][Dbkeys.username], timestamp2, messaging);
               }).then((value) async {
                 if (index >= list.length - 1) {
                   Fiberchat.toast(
@@ -2811,8 +2464,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   });
                   Navigator.of(this.context).pop();
                 } else {
-                  await sendForwardMessageEach(
-                      index + 1, list, privateKey, mssgDoc);
+                  await sendForwardMessageEach(index + 1, list, privateKey, mssgDoc);
                 }
               });
             }
@@ -2838,9 +2490,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     final observer = Provider.of<Observer>(this.context, listen: false);
     bool isContainURL = false;
     try {
-      isContainURL = Uri.tryParse(doc[Dbkeys.content]!) == null
-          ? false
-          : Uri.tryParse(doc[Dbkeys.content]!)!.isAbsolute;
+      isContainURL = Uri.tryParse(doc[Dbkeys.content]!) == null ? false : Uri.tryParse(doc[Dbkeys.content]!)!.isAbsolute;
     } on Exception catch (_) {
       isContainURL = false;
     }
@@ -2856,38 +2506,28 @@ class _GroupChatPageState extends State<GroupChatPage>
                     }
                   : null,
               child: GroupChatBubble(
-                isURLtext: doc[Dbkeys.messageType] == MessageType.text.index &&
-                    isContainURL == true,
+                isURLtext: doc[Dbkeys.messageType] == MessageType.text.index && isContainURL == true,
                 is24hrsFormat: observer.is24hrsTimeformat,
                 prefs: widget.prefs,
                 currentUserNo: widget.currentUserno,
                 model: widget.model,
-                savednameifavailable: contactsProvider
-                            .contactsBookContactList!.entries
+                savednameifavailable: contactsProvider.contactsBookContactList!.entries
                             .toList()
-                            .indexWhere((element) =>
-                                element.key == doc[Dbkeys.groupmsgSENDBY]) >=
+                            .indexWhere((element) => element.key == doc[Dbkeys.groupmsgSENDBY]) >=
                         0
                     ? contactsProvider.contactsBookContactList!.entries
-                        .toList()[contactsProvider
-                            .contactsBookContactList!.entries
+                        .toList()[contactsProvider.contactsBookContactList!.entries
                             .toList()
-                            .indexWhere((element) =>
-                                element.key == doc[Dbkeys.groupmsgSENDBY])]
+                            .indexWhere((element) => element.key == doc[Dbkeys.groupmsgSENDBY])]
                         .value
                     : null,
-                postedbyname: contactsProvider
-                            .alreadyJoinedSavedUsersPhoneNameAsInServer
-                            .indexWhere((element) =>
-                                element.phone == doc[Dbkeys.groupmsgSENDBY]) >=
+                postedbyname: contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                            .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY]) >=
                         0
                     ? contactsProvider
-                            .alreadyJoinedSavedUsersPhoneNameAsInServer[
-                                contactsProvider
-                                    .alreadyJoinedSavedUsersPhoneNameAsInServer
-                                    .indexWhere((element) =>
-                                        element.phone ==
-                                        doc[Dbkeys.groupmsgSENDBY])]
+                            .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider
+                                .alreadyJoinedSavedUsersPhoneNameAsInServer
+                                .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY])]
                             .name ??
                         doc[Dbkeys.groupmsgSENDBY]
                     : '',
@@ -2898,54 +2538,34 @@ class _GroupChatPageState extends State<GroupChatPage>
                         ? MessageType.text
                         : doc[Dbkeys.messageType] == MessageType.contact.index
                             ? MessageType.contact
-                            : doc[Dbkeys.messageType] ==
-                                    MessageType.location.index
+                            : doc[Dbkeys.messageType] == MessageType.location.index
                                 ? MessageType.location
-                                : doc[Dbkeys.messageType] ==
-                                        MessageType.image.index
+                                : doc[Dbkeys.messageType] == MessageType.image.index
                                     ? MessageType.image
-                                    : doc[Dbkeys.messageType] ==
-                                            MessageType.video.index
+                                    : doc[Dbkeys.messageType] == MessageType.video.index
                                         ? MessageType.video
-                                        : doc[Dbkeys.messageType] ==
-                                                MessageType.doc.index
+                                        : doc[Dbkeys.messageType] == MessageType.doc.index
                                             ? MessageType.doc
-                                            : doc[Dbkeys.messageType] ==
-                                                    MessageType.audio.index
+                                            : doc[Dbkeys.messageType] == MessageType.audio.index
                                                 ? MessageType.audio
                                                 : MessageType.text,
                 child: doc[Dbkeys.groupmsgISDELETED] == true
                     ? Text(
                         getTranslated(context, 'msgdeleted'),
-                        style: TextStyle(
-                            color: storychatBlack.withOpacity(0.6),
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic),
+                        style: TextStyle(color: storychatBlack.withOpacity(0.6), fontSize: 15, fontStyle: FontStyle.italic),
                       )
                     : doc[Dbkeys.messageType] == MessageType.text.index
                         ? getTextMessage(isMe, doc, saved)
                         : doc[Dbkeys.messageType] == MessageType.location.index
-                            ? getLocationMessage(doc[Dbkeys.content], doc,
-                                saved: false)
+                            ? getLocationMessage(doc[Dbkeys.content], doc, saved: false)
                             : doc[Dbkeys.messageType] == MessageType.doc.index
-                                ? getDocmessage(
-                                    context, doc[Dbkeys.content], doc,
-                                    saved: false)
-                                : doc[Dbkeys.messageType] ==
-                                        MessageType.audio.index
-                                    ? getAudiomessage(
-                                        context, doc[Dbkeys.content], doc,
-                                        isMe: isMe, saved: false)
-                                    : doc[Dbkeys.messageType] ==
-                                            MessageType.video.index
-                                        ? getVideoMessage(
-                                            context, doc[Dbkeys.content], doc,
-                                            saved: false)
-                                        : doc[Dbkeys.messageType] ==
-                                                MessageType.contact.index
-                                            ? getContactMessage(context,
-                                                doc[Dbkeys.content], doc,
-                                                saved: false)
+                                ? getDocmessage(context, doc[Dbkeys.content], doc, saved: false)
+                                : doc[Dbkeys.messageType] == MessageType.audio.index
+                                    ? getAudiomessage(context, doc[Dbkeys.content], doc, isMe: isMe, saved: false)
+                                    : doc[Dbkeys.messageType] == MessageType.video.index
+                                        ? getVideoMessage(context, doc[Dbkeys.content], doc, saved: false)
+                                        : doc[Dbkeys.messageType] == MessageType.contact.index
+                                            ? getContactMessage(context, doc[Dbkeys.content], doc, saved: false)
                                             : getImageMessage(
                                                 doc,
                                                 saved: saved,
@@ -2958,11 +2578,8 @@ class _GroupChatPageState extends State<GroupChatPage>
             ));
   }
 
-  Widget getVideoMessage(
-      BuildContext context, String message, Map<String, dynamic> doc,
-      {bool saved = false}) {
-    Map<dynamic, dynamic>? meta =
-        jsonDecode((message.split('-BREAK-')[2]).toString());
+  Widget getVideoMessage(BuildContext context, String message, Map<String, dynamic> doc, {bool saved = false}) {
+    Map<dynamic, dynamic>? meta = jsonDecode((message.split('-BREAK-')[2]).toString());
     final bool isMe = doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno;
     return Container(
       child: InkWell(
@@ -2987,9 +2604,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     ? Container(
                         margin: EdgeInsets.only(bottom: 10),
                         child: Row(
-                            mainAxisAlignment: isMe == true
-                                ? MainAxisAlignment.start
-                                : MainAxisAlignment.end,
+                            mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
@@ -3020,8 +2635,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     placeholder: (context, url) => Container(
                       child: Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.blueGrey[400]!),
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
                         ),
                       ),
                       width: 245,
@@ -3057,8 +2671,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     height: 245,
                   ),
                   Center(
-                    child: Icon(Icons.play_circle_fill_outlined,
-                        color: Colors.white70, size: 65),
+                    child: Icon(Icons.play_circle_fill_outlined, color: Colors.white70, size: 65),
                   ),
                 ],
               ),
@@ -3069,9 +2682,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     );
   }
 
-  Widget getContactMessage(
-      BuildContext context, String message, Map<String, dynamic> doc,
-      {bool saved = false}) {
+  Widget getContactMessage(BuildContext context, String message, Map<String, dynamic> doc, {bool saved = false}) {
     final bool isMe = doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno;
     return SizedBox(
       width: 210,
@@ -3084,9 +2695,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
                       child: Row(
-                          mainAxisAlignment: isMe == true
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.end,
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
@@ -3114,19 +2723,13 @@ class _GroupChatPageState extends State<GroupChatPage>
               message.split('-BREAK-')[0],
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: TextStyle(
-                  height: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.blue[400]),
+              style: TextStyle(height: 1.4, fontWeight: FontWeight.w700, color: Colors.blue[400]),
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 3),
               child: Text(
                 message.split('-BREAK-')[1],
-                style: TextStyle(
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87),
+                style: TextStyle(height: 1.4, fontWeight: FontWeight.w500, color: Colors.black87),
               ),
             ),
           ),
@@ -3139,8 +2742,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     return doc.containsKey(Dbkeys.isReply) == true
         ? doc[Dbkeys.isReply] == true
             ? Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -3148,24 +2750,19 @@ class _GroupChatPageState extends State<GroupChatPage>
                   SizedBox(
                     height: 10,
                   ),
-                  selectablelinkify(doc[Dbkeys.content],
-                      doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left),
+                  selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left),
                 ],
               )
             : doc.containsKey(Dbkeys.isForward) == true
                 ? doc[Dbkeys.isForward] == true
                     ? Column(
-                        crossAxisAlignment: isMe
-                            ? CrossAxisAlignment.start
-                            : CrossAxisAlignment.end,
+                        crossAxisAlignment: isMe ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
                               child: Row(
-                                  mainAxisAlignment: isMe == true
-                                      ? MainAxisAlignment.start
-                                      : MainAxisAlignment.end,
+                                  mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                 Icon(
@@ -3187,20 +2784,15 @@ class _GroupChatPageState extends State<GroupChatPage>
                           SizedBox(
                             height: 10,
                           ),
-                          selectablelinkify(doc[Dbkeys.content],
-                              doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
+                          selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
                         ],
                       )
-                    : selectablelinkify(doc[Dbkeys.content],
-                        doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
-                : selectablelinkify(doc[Dbkeys.content],
-                    doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
-        : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5,
-            TextAlign.left);
+                    : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
+                : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left)
+        : selectablelinkify(doc[Dbkeys.content], doc[Dbkeys.groupmsgTIME], 15.5, TextAlign.left);
   }
 
-  Widget getLocationMessage(String? message, Map<String, dynamic> doc,
-      {bool saved = false}) {
+  Widget getLocationMessage(String? message, Map<String, dynamic> doc, {bool saved = false}) {
     final bool isMe = doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno;
     return InkWell(
       onTap: () {
@@ -3209,16 +2801,13 @@ class _GroupChatPageState extends State<GroupChatPage>
       child: doc.containsKey(Dbkeys.isForward) == true
           ? doc[Dbkeys.isForward] == true
               ? Column(
-                  crossAxisAlignment:
-                      isMe ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                  crossAxisAlignment: isMe ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                         child: Row(
-                            mainAxisAlignment: isMe == true
-                                ? MainAxisAlignment.start
-                                : MainAxisAlignment.end,
+                            mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                           Icon(
@@ -3243,8 +2832,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     Image.asset(
                       'assets/images/mapview.jpg',
                       width: MediaQuery.of(this.context).size.width / 1.7,
-                      height:
-                          (MediaQuery.of(this.context).size.width / 1.7) * 0.6,
+                      height: (MediaQuery.of(this.context).size.width / 1.7) * 0.6,
                     ),
                   ],
                 )
@@ -3261,9 +2849,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     );
   }
 
-  Widget getAudiomessage(
-      BuildContext context, String message, Map<String, dynamic> doc,
-      {bool saved = false, bool isMe = true}) {
+  Widget getAudiomessage(BuildContext context, String message, Map<String, dynamic> doc, {bool saved = false, bool isMe = true}) {
     return Container(
       margin: EdgeInsets.only(bottom: 10),
       // width: 250,
@@ -3276,9 +2862,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
                       child: Row(
-                          mainAxisAlignment: isMe == true
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.end,
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
@@ -3309,8 +2893,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                     prefs: widget.prefs,
                     keyloader: _keyLoader,
                     url: message.split('-BREAK-')[0],
-                    fileName:
-                        'Recording_' + message.split('-BREAK-')[1] + '.mp3',
+                    fileName: 'Recording_' + message.split('-BREAK-')[1] + '.mp3',
                     context: this.context,
                     isOpenAfterDownload: true);
               },
@@ -3322,9 +2905,7 @@ class _GroupChatPageState extends State<GroupChatPage>
     );
   }
 
-  Widget getDocmessage(
-      BuildContext context, String message, Map<String, dynamic> doc,
-      {bool saved = false}) {
+  Widget getDocmessage(BuildContext context, String message, Map<String, dynamic> doc, {bool saved = false}) {
     final bool isMe = doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno;
     return SizedBox(
       width: 220,
@@ -3337,9 +2918,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
                       child: Row(
-                          mainAxisAlignment: isMe == true
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.end,
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
@@ -3379,10 +2958,7 @@ class _GroupChatPageState extends State<GroupChatPage>
               message.split('-BREAK-')[1],
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
-              style: TextStyle(
-                  height: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87),
+              style: TextStyle(height: 1.4, fontWeight: FontWeight.w700, color: Colors.black87),
             ),
           ),
           Divider(
@@ -3411,9 +2987,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                           );
                         },
                         child: Text(getTranslated(context, 'preview'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.blue[400]))),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                     ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
@@ -3429,9 +3003,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                               isOpenAfterDownload: true);
                         },
                         child: Text(getTranslated(context, 'download'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.blue[400]))),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
                   ],
                 )
               : ElevatedButton(
@@ -3449,9 +3021,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                         isOpenAfterDownload: true);
                   },
                   child: Text(getTranslated(context, 'download'),
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.blue[400]))),
+                      style: TextStyle(fontWeight: FontWeight.w700, color: Colors.blue[400]))),
         ],
       ),
     );
@@ -3470,9 +3040,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                   ? Container(
                       margin: EdgeInsets.only(bottom: 10),
                       child: Row(
-                          mainAxisAlignment: isMe == true
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.end,
+                          mainAxisAlignment: isMe == true ? MainAxisAlignment.start : MainAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
@@ -3497,10 +3065,7 @@ class _GroupChatPageState extends State<GroupChatPage>
               ? Material(
                   child: Container(
                     decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: Save.getImageFromBase64(doc[Dbkeys.content])
-                              .image,
-                          fit: BoxFit.cover),
+                      image: DecorationImage(image: Save.getImageFromBase64(doc[Dbkeys.content]).image, fit: BoxFit.cover),
                     ),
                     width: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
                     height: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
@@ -3515,15 +3080,12 @@ class _GroupChatPageState extends State<GroupChatPage>
                       this.context,
                       MaterialPageRoute(
                         builder: (context) => PhotoViewWrapper(
-
-                          prefs: widget.prefs,
-                          keyloader: _keyLoader,
-                          imageUrl: doc[Dbkeys.content],
-                          message: doc[Dbkeys.content],
-                          tag: doc[Dbkeys.groupmsgTIME].toString(),
-                          urls: [doc[Dbkeys.content]]
-  
-                        ),
+                            prefs: widget.prefs,
+                            keyloader: _keyLoader,
+                            imageUrl: doc[Dbkeys.content],
+                            message: doc[Dbkeys.content],
+                            tag: doc[Dbkeys.groupmsgTIME].toString(),
+                            urls: [doc[Dbkeys.content]]),
                       )),
                   child: CachedNetworkImage(
                     placeholder: (context, url) => Container(
@@ -3532,15 +3094,12 @@ class _GroupChatPageState extends State<GroupChatPage>
                           height: 60.0,
                           width: 60.0,
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.blueGrey[400]!),
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey[400]!),
                           ),
                         ),
                       ),
-                      width:
-                          doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
-                      height:
-                          doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
+                      width: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
+                      height: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
                       padding: EdgeInsets.all(20.0),
                       decoration: BoxDecoration(
                         color: Colors.blueGrey,
@@ -3552,10 +3111,8 @@ class _GroupChatPageState extends State<GroupChatPage>
                     errorWidget: (context, str, error) => Material(
                       child: Image.asset(
                         'assets/images/img_not_available.jpeg',
-                        width:
-                            doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
-                        height:
-                            doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
+                        width: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
+                        height: doc[Dbkeys.content].contains('giphy') ? 160 : 245.0,
                         fit: BoxFit.cover,
                       ),
                       borderRadius: BorderRadius.all(
@@ -3581,24 +3138,18 @@ class _GroupChatPageState extends State<GroupChatPage>
                   // width: 280,
                   height: 70,
                   margin: EdgeInsets.only(left: 0, right: 0),
-                  decoration: BoxDecoration(
-                      color: storychatWhite.withOpacity(0.55),
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  decoration:
+                      BoxDecoration(color: storychatWhite.withOpacity(0.55), borderRadius: BorderRadius.all(Radius.circular(10))),
                   child: Stack(
                     children: [
                       Container(
                           margin: EdgeInsetsDirectional.all(4),
                           decoration: BoxDecoration(
-                              color: storychatGrey.withOpacity(0.1),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(8))),
+                              color: storychatGrey.withOpacity(0.1), borderRadius: BorderRadius.all(Radius.circular(8))),
                           child: Row(children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: doc[Dbkeys.groupmsgSENDBY] ==
-                                        widget.currentUserno
-                                    ? storychatPRIMARYcolor
-                                    : Colors.purple,
+                                color: doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno ? storychatPRIMARYcolor : Colors.purple,
                                 borderRadius: BorderRadius.only(
                                     topRight: Radius.circular(0),
                                     bottomRight: Radius.circular(0),
@@ -3620,35 +3171,22 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   Padding(
                                     padding: EdgeInsets.only(right: 30),
                                     child: Text(
-                                      doc[Dbkeys.groupmsgSENDBY] ==
-                                              widget.currentUserno
+                                      doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
                                           ? getTranslated(this.context, 'you')
-                                          : contactsProvider
-                                                      .alreadyJoinedSavedUsersPhoneNameAsInServer
-                                                      .indexWhere((element) =>
-                                                          element.phone ==
-                                                          doc[Dbkeys
-                                                              .groupmsgSENDBY]) >=
+                                          : contactsProvider.alreadyJoinedSavedUsersPhoneNameAsInServer
+                                                      .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY]) >=
                                                   0
                                               ? contactsProvider
-                                                      .alreadyJoinedSavedUsersPhoneNameAsInServer[
-                                                          contactsProvider
-                                                              .alreadyJoinedSavedUsersPhoneNameAsInServer
-                                                              .indexWhere((element) =>
-                                                                  element
-                                                                      .phone ==
-                                                                  doc[Dbkeys
-                                                                      .groupmsgSENDBY])]
+                                                      .alreadyJoinedSavedUsersPhoneNameAsInServer[contactsProvider
+                                                          .alreadyJoinedSavedUsersPhoneNameAsInServer
+                                                          .indexWhere((element) => element.phone == doc[Dbkeys.groupmsgSENDBY])]
                                                       .name ??
-                                                  doc[Dbkeys.groupmsgSENDBY]
-                                                      .toString()
-                                              : doc[Dbkeys.groupmsgSENDBY]
-                                                  .toString(),
+                                                  doc[Dbkeys.groupmsgSENDBY].toString()
+                                              : doc[Dbkeys.groupmsgSENDBY].toString(),
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: doc[Dbkeys.groupmsgSENDBY] ==
-                                                  widget.currentUserno
+                                          color: doc[Dbkeys.groupmsgSENDBY] == widget.currentUserno
                                               ? storychatPRIMARYcolor
                                               : Colors.purple),
                                     ),
@@ -3656,70 +3194,47 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   SizedBox(
                                     height: 8,
                                   ),
-                                  doc[Dbkeys.messageType] ==
-                                          MessageType.text.index
+                                  doc[Dbkeys.messageType] == MessageType.text.index
                                       ? Text(
                                           doc[Dbkeys.content],
                                           overflow: TextOverflow.ellipsis,
                                           maxLines: 1,
-                                          style:
-                                              TextStyle(color: storychatBlack),
+                                          style: TextStyle(color: storychatBlack),
                                         )
-                                      : doc[Dbkeys.messageType] ==
-                                              MessageType.doc.index
+                                      : doc[Dbkeys.messageType] == MessageType.doc.index
                                           ? Container(
-                                              padding: const EdgeInsets.only(
-                                                  right: 75),
+                                              padding: const EdgeInsets.only(right: 75),
                                               child: Text(
-                                                doc[Dbkeys.content]
-                                                    .split('-BREAK-')[1],
+                                                doc[Dbkeys.content].split('-BREAK-')[1],
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 1,
-                                                style: TextStyle(
-                                                    color: storychatBlack),
+                                                style: TextStyle(color: storychatBlack),
                                               ),
                                             )
                                           : Text(
                                               getTranslated(
                                                   this.context,
-                                                  doc[Dbkeys.messageType] ==
-                                                          MessageType
-                                                              .image.index
+                                                  doc[Dbkeys.messageType] == MessageType.image.index
                                                       ? 'nim'
-                                                      : doc[Dbkeys.messageType] ==
-                                                              MessageType
-                                                                  .video.index
+                                                      : doc[Dbkeys.messageType] == MessageType.video.index
                                                           ? 'nvm'
-                                                          : doc[Dbkeys.messageType] ==
-                                                                  MessageType
-                                                                      .audio
-                                                                      .index
+                                                          : doc[Dbkeys.messageType] == MessageType.audio.index
                                                               ? 'nam'
-                                                              : doc[Dbkeys.messageType] ==
-                                                                      MessageType
-                                                                          .contact
-                                                                          .index
+                                                              : doc[Dbkeys.messageType] == MessageType.contact.index
                                                                   ? 'ncm'
-                                                                  : doc[Dbkeys.messageType] ==
-                                                                          MessageType
-                                                                              .location
-                                                                              .index
+                                                                  : doc[Dbkeys.messageType] == MessageType.location.index
                                                                       ? 'nlm'
-                                                                      : doc[Dbkeys.messageType] ==
-                                                                              MessageType.doc.index
+                                                                      : doc[Dbkeys.messageType] == MessageType.doc.index
                                                                           ? 'ndm'
                                                                           : ''),
                                               overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                  color: storychatBlack),
+                                              style: TextStyle(color: storychatBlack),
                                             ),
                                 ],
                               ),
                             ))
                           ])),
-                      doc[Dbkeys.messageType] == MessageType.text.index ||
-                              doc[Dbkeys.messageType] ==
-                                  MessageType.location.index
+                      doc[Dbkeys.messageType] == MessageType.text.index || doc[Dbkeys.messageType] == MessageType.location.index
                           ? SizedBox(
                               width: 0,
                               height: 0,
@@ -3739,21 +3254,12 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           topLeft: Radius.circular(0),
                                           bottomLeft: Radius.circular(0)),
                                       child: CachedNetworkImage(
-                                        placeholder: (context, url) =>
-                                            Container(
+                                        placeholder: (context, url) => Container(
                                           child: CircularProgressIndicator(
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                    storychatSECONDARYolor),
+                                            valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor),
                                           ),
-                                          width: doc[Dbkeys.content]
-                                                  .contains('giphy')
-                                              ? 60
-                                              : 60.0,
-                                          height: doc[Dbkeys.content]
-                                                  .contains('giphy')
-                                              ? 60
-                                              : 60.0,
+                                          width: doc[Dbkeys.content].contains('giphy') ? 60 : 60.0,
+                                          height: doc[Dbkeys.content].contains('giphy') ? 60 : 60.0,
                                           padding: EdgeInsets.all(8.0),
                                           decoration: BoxDecoration(
                                             color: Colors.blueGrey[200],
@@ -3762,8 +3268,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                             ),
                                           ),
                                         ),
-                                        errorWidget: (context, str, error) =>
-                                            Material(
+                                        errorWidget: (context, str, error) => Material(
                                           child: Image.asset(
                                             'assets/images/img_not_available.jpeg',
                                             width: 60.0,
@@ -3775,10 +3280,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           ),
                                           clipBehavior: Clip.hardEdge,
                                         ),
-                                        imageUrl: doc[Dbkeys.messageType] ==
-                                                MessageType.video.index
-                                            ? ''
-                                            : doc[Dbkeys.content],
+                                        imageUrl: doc[Dbkeys.messageType] == MessageType.video.index ? '' : doc[Dbkeys.content],
                                         width: 60,
                                         height: 60,
                                         fit: BoxFit.cover,
@@ -3786,8 +3288,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                     ),
                                   ),
                                 )
-                              : doc[Dbkeys.messageType] ==
-                                      MessageType.video.index
+                              : doc[Dbkeys.messageType] == MessageType.video.index
                                   ? Positioned(
                                       right: -2,
                                       top: -2,
@@ -3798,11 +3299,9 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           child: ClipRRect(
                                               borderRadius: BorderRadius.only(
                                                   topRight: Radius.circular(5),
-                                                  bottomRight:
-                                                      Radius.circular(5),
+                                                  bottomRight: Radius.circular(5),
                                                   topLeft: Radius.circular(0),
-                                                  bottomLeft:
-                                                      Radius.circular(0)),
+                                                  bottomLeft: Radius.circular(0)),
                                               child: Container(
                                                 color: Colors.blueGrey[200],
                                                 height: 74,
@@ -3810,67 +3309,45 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                 child: Stack(
                                                   children: [
                                                     CachedNetworkImage(
-                                                      placeholder:
-                                                          (context, url) =>
-                                                              Container(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                          valueColor:
-                                                              AlwaysStoppedAnimation<
-                                                                      Color>(
-                                                                  storychatSECONDARYolor),
+                                                      placeholder: (context, url) => Container(
+                                                        child: CircularProgressIndicator(
+                                                          valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor),
                                                         ),
                                                         width: 74,
                                                         height: 74,
-                                                        padding:
-                                                            EdgeInsets.all(8.0),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors
-                                                              .blueGrey[200],
-                                                          borderRadius:
-                                                              BorderRadius.all(
-                                                            Radius.circular(
-                                                                0.0),
+                                                        padding: EdgeInsets.all(8.0),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.blueGrey[200],
+                                                          borderRadius: BorderRadius.all(
+                                                            Radius.circular(0.0),
                                                           ),
                                                         ),
                                                       ),
-                                                      errorWidget: (context,
-                                                              str, error) =>
-                                                          Material(
+                                                      errorWidget: (context, str, error) => Material(
                                                         child: Image.asset(
                                                           'assets/images/img_not_available.jpeg',
                                                           width: 60,
                                                           height: 60,
                                                           fit: BoxFit.cover,
                                                         ),
-                                                        borderRadius:
-                                                            BorderRadius.all(
+                                                        borderRadius: BorderRadius.all(
                                                           Radius.circular(0.0),
                                                         ),
-                                                        clipBehavior:
-                                                            Clip.hardEdge,
+                                                        clipBehavior: Clip.hardEdge,
                                                       ),
-                                                      imageUrl:
-                                                          doc[Dbkeys.content]
-                                                              .split(
-                                                                  '-BREAK-')[1],
+                                                      imageUrl: doc[Dbkeys.content].split('-BREAK-')[1],
                                                       width: 74,
                                                       height: 74,
                                                       fit: BoxFit.cover,
                                                     ),
                                                     Container(
-                                                      color: Colors.black
-                                                          .withOpacity(0.4),
+                                                      color: Colors.black.withOpacity(0.4),
                                                       height: 74,
                                                       width: 74,
                                                     ),
                                                     Center(
-                                                      child: Icon(
-                                                          Icons
-                                                              .play_circle_fill_outlined,
-                                                          color: Colors.white70,
-                                                          size: 25),
+                                                      child:
+                                                          Icon(Icons.play_circle_fill_outlined, color: Colors.white70, size: 25),
                                                     ),
                                                   ],
                                                 ),
@@ -3885,58 +3362,31 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           child: ClipRRect(
                                               borderRadius: BorderRadius.only(
                                                   topRight: Radius.circular(5),
-                                                  bottomRight:
-                                                      Radius.circular(5),
+                                                  bottomRight: Radius.circular(5),
                                                   topLeft: Radius.circular(0),
-                                                  bottomLeft:
-                                                      Radius.circular(0)),
+                                                  bottomLeft: Radius.circular(0)),
                                               child: Container(
-                                                  color: doc[Dbkeys.messageType] ==
-                                                          MessageType.doc.index
+                                                  color: doc[Dbkeys.messageType] == MessageType.doc.index
                                                       ? Colors.yellow[800]
-                                                      : doc[Dbkeys.messageType] ==
-                                                              MessageType
-                                                                  .audio.index
+                                                      : doc[Dbkeys.messageType] == MessageType.audio.index
                                                           ? storychatGreenColor400
-                                                          : doc[Dbkeys.messageType] ==
-                                                                  MessageType
-                                                                      .location
-                                                                      .index
+                                                          : doc[Dbkeys.messageType] == MessageType.location.index
                                                               ? Colors.red[700]
-                                                              : doc[Dbkeys.messageType] ==
-                                                                      MessageType
-                                                                          .contact
-                                                                          .index
-                                                                  ? Colors
-                                                                      .blue[400]
-                                                                  : Colors
-                                                                      .cyan[700],
+                                                              : doc[Dbkeys.messageType] == MessageType.contact.index
+                                                                  ? Colors.blue[400]
+                                                                  : Colors.cyan[700],
                                                   height: 74,
                                                   width: 74,
                                                   child: Icon(
-                                                    doc[Dbkeys.messageType] ==
-                                                            MessageType
-                                                                .doc.index
-                                                        ? Icons
-                                                            .insert_drive_file
-                                                        : doc[Dbkeys.messageType] ==
-                                                                MessageType
-                                                                    .audio.index
+                                                    doc[Dbkeys.messageType] == MessageType.doc.index
+                                                        ? Icons.insert_drive_file
+                                                        : doc[Dbkeys.messageType] == MessageType.audio.index
                                                             ? Icons.mic_rounded
-                                                            : doc[Dbkeys.messageType] ==
-                                                                    MessageType
-                                                                        .location
-                                                                        .index
-                                                                ? Icons
-                                                                    .location_on
-                                                                : doc[Dbkeys.messageType] ==
-                                                                        MessageType
-                                                                            .contact
-                                                                            .index
-                                                                    ? Icons
-                                                                        .contact_page_sharp
-                                                                    : Icons
-                                                                        .insert_drive_file,
+                                                            : doc[Dbkeys.messageType] == MessageType.location.index
+                                                                ? Icons.location_on
+                                                                : doc[Dbkeys.messageType] == MessageType.contact.index
+                                                                    ? Icons.contact_page_sharp
+                                                                    : Icons.insert_drive_file,
                                                     color: Colors.white,
                                                     size: 35,
                                                   ))))),
@@ -3963,33 +3413,27 @@ class _GroupChatPageState extends State<GroupChatPage>
 
   Widget buildMessagesUsingProvider(BuildContext context) {
     return Consumer<List<GroupModel>>(
-        builder: (context, groupList, _child) =>
-            Consumer<FirestoreDataProviderMESSAGESforGROUPCHAT>(
-                builder: (context, firestoreDataProvider, _) =>
-                    InfiniteCOLLECTIONListViewWidget(
-                      prefs: widget.prefs,
-                      scrollController: realtime,
-                      isreverse: true,
-                      firestoreDataProviderMESSAGESforGROUPCHAT:
-                          firestoreDataProvider,
-                      datatype: Dbkeys.datatypeGROUPCHATMSGS,
-                      refdata: firestoreChatquery,
-                      list: ListView.builder(
-                          reverse: true,
-                          padding: EdgeInsets.all(7),
-                          physics: BouncingScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: firestoreDataProvider.recievedDocs.length,
-                          itemBuilder: (BuildContext context, int i) {
-                            var dc = firestoreDataProvider.recievedDocs[i];
+        builder: (context, groupList, _child) => Consumer<FirestoreDataProviderMESSAGESforGROUPCHAT>(
+            builder: (context, firestoreDataProvider, _) => InfiniteCOLLECTIONListViewWidget(
+                  prefs: widget.prefs,
+                  scrollController: realtime,
+                  isreverse: true,
+                  firestoreDataProviderMESSAGESforGROUPCHAT: firestoreDataProvider,
+                  datatype: Dbkeys.datatypeGROUPCHATMSGS,
+                  refdata: firestoreChatquery,
+                  list: ListView.builder(
+                      reverse: true,
+                      padding: EdgeInsets.all(7),
+                      physics: BouncingScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: firestoreDataProvider.recievedDocs.length,
+                      itemBuilder: (BuildContext context, int i) {
+                        var dc = firestoreDataProvider.recievedDocs[i];
 
-                            return buildEachMessage(
-                                dc,
-                                groupList.lastWhere((element) =>
-                                    element.docmap[Dbkeys.groupID] ==
-                                    widget.groupID));
-                          }),
-                    )));
+                        return buildEachMessage(
+                            dc, groupList.lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID));
+                      }),
+                )));
   }
 
   Widget buildLoadingThumbnail() {
@@ -3997,14 +3441,10 @@ class _GroupChatPageState extends State<GroupChatPage>
       child: isgeneratingSomethingLoader
           ? Container(
               child: Center(
-                child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(storychatSECONDARYolor)),
+                child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(storychatSECONDARYolor)),
               ),
               color: pickTextColorBasedOnBgColorAdvanced(
-                      !Thm.isDarktheme(widget.prefs)
-                          ? storychatCONTAINERboxColorDarkMode
-                          : storychatCONTAINERboxColorLightMode)
+                      !Thm.isDarktheme(widget.prefs) ? storychatCONTAINERboxColorDarkMode : storychatCONTAINERboxColorLightMode)
                   .withOpacity(0.6),
             )
           : Container(),
@@ -4013,9 +3453,7 @@ class _GroupChatPageState extends State<GroupChatPage>
 
   shareMedia(BuildContext context) {
     showModalBottomSheet(
-        backgroundColor: Thm.isDarktheme(widget.prefs)
-            ? storychatDIALOGColorDarkMode
-            : storychatDIALOGColorLightMode,
+        backgroundColor: Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode,
         context: context,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
@@ -4049,16 +3487,11 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 MaterialPageRoute(
                                     builder: (context) => MultiDocumentPicker(
                                           prefs: widget.prefs,
-                                          title: getTranslated(
-                                              this.context, 'pickdoc'),
+                                          title: getTranslated(this.context, 'pickdoc'),
                                           callback: getFileData,
-                                          writeMessage:
-                                              (String? url, int time) async {
+                                          writeMessage: (String? url, int time) async {
                                             if (url != null) {
-                                              String finalUrl = url +
-                                                  '-BREAK-' +
-                                                  basename(pickedFile!.path)
-                                                      .toString();
+                                              String finalUrl = url + '-BREAK-' + basename(pickedFile!.path).toString();
                                               onSendMessage(
                                                   context: this.context,
                                                   content: finalUrl,
@@ -4102,11 +3535,8 @@ class _GroupChatPageState extends State<GroupChatPage>
                           onPressed: () async {
                             hidekeyboard(context);
                             Navigator.of(context).pop();
-                            File? selectedMedia =
-                                await pickVideoFromgallery(context)
-                                    .catchError((err) {
-                              Fiberchat.toast(
-                                  getTranslated(context, "invalidfile"));
+                            File? selectedMedia = await pickVideoFromgallery(context).catchError((err) {
+                              Fiberchat.toast(getTranslated(context, "invalidfile"));
                               return null;
                             });
 
@@ -4114,17 +3544,12 @@ class _GroupChatPageState extends State<GroupChatPage>
                               setStatusBarColor(widget.prefs);
                             } else {
                               setStatusBarColor(widget.prefs);
-                              String fileExtension =
-                                  p.extension(selectedMedia.path).toLowerCase();
+                              String fileExtension = p.extension(selectedMedia.path).toLowerCase();
 
-                              if (fileExtension == ".mp4" ||
-                                  fileExtension == ".mov") {
+                              if (fileExtension == ".mp4" || fileExtension == ".mov") {
                                 final tempDir = await getTemporaryDirectory();
-                                File file = await File(
-                                        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp4')
-                                    .create();
-                                file.writeAsBytesSync(
-                                    selectedMedia.readAsBytesSync());
+                                File file = await File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp4').create();
+                                file.writeAsBytesSync(selectedMedia.readAsBytesSync());
 
                                 await Navigator.push(
                                     this.context,
@@ -4137,29 +3562,16 @@ class _GroupChatPageState extends State<GroupChatPage>
                                             thumbnailQuality: 90,
                                             videoQuality: 100,
                                             maxDuration: 1900,
-                                            onEditExported: (videoFile,
-                                                thumnailFile) async {
-                                              int timeStamp = DateTime.now()
-                                                  .millisecondsSinceEpoch;
-                                              String videoFileext =
-                                                  p.extension(file.path);
-                                              String videofileName =
-                                                  'Video-$timeStamp$videoFileext';
-                                              String? videoUrl =
-                                                  await uploadSelectedLocalFileWithProgressIndicator(
-                                                      file,
-                                                      true,
-                                                      false,
-                                                      timeStamp,
-                                                      filenameoptional:
-                                                          videofileName);
+                                            onEditExported: (videoFile, thumnailFile) async {
+                                              int timeStamp = DateTime.now().millisecondsSinceEpoch;
+                                              String videoFileext = p.extension(file.path);
+                                              String videofileName = 'Video-$timeStamp$videoFileext';
+                                              String? videoUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                  file, true, false, timeStamp,
+                                                  filenameoptional: videofileName);
                                               if (videoUrl != null) {
-                                                String? thumnailUrl =
-                                                    await uploadSelectedLocalFileWithProgressIndicator(
-                                                        thumnailFile,
-                                                        false,
-                                                        true,
-                                                        timeStamp);
+                                                String? thumnailUrl = await uploadSelectedLocalFileWithProgressIndicator(
+                                                    thumnailFile, false, true, timeStamp);
                                                 if (thumnailUrl != null) {
                                                   onSendMessage(
                                                     context: this.context,
@@ -4221,20 +3633,14 @@ class _GroupChatPageState extends State<GroupChatPage>
                             await Navigator.push(
                                 context,
                                 new MaterialPageRoute(
-                                    builder: (context) =>
-                                        new CameraImageGalleryPicker(
+                                    builder: (context) => new CameraImageGalleryPicker(
                                           onTakeFile: (file) async {
                                             setStatusBarColor(widget.prefs);
 
-                                            int timeStamp = DateTime.now()
-                                                .millisecondsSinceEpoch;
+                                            int timeStamp = DateTime.now().millisecondsSinceEpoch;
 
                                             String? url =
-                                                await uploadSelectedLocalFileWithProgressIndicator(
-                                                    file,
-                                                    false,
-                                                    false,
-                                                    timeStamp);
+                                                await uploadSelectedLocalFileWithProgressIndicator(file, false, false, timeStamp);
                                             if (url != null) {
                                               onSendMessage(
                                                   context: this.context,
@@ -4295,16 +3701,13 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 MaterialPageRoute(
                                     builder: (context) => AudioRecord(
                                           prefs: widget.prefs,
-                                          title: getTranslated(
-                                              this.context, 'record'),
+                                          title: getTranslated(this.context, 'record'),
                                           callback: getFileData,
                                         ))).then((url) {
                               if (url != null) {
                                 onSendMessage(
                                   context: this.context,
-                                  content: url +
-                                      '-BREAK-' +
-                                      uploadTimestamp.toString(),
+                                  content: url + '-BREAK-' + uploadTimestamp.toString(),
                                   type: MessageType.audio,
                                 );
                               } else {}
@@ -4346,8 +3749,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                             Navigator.of(context).pop();
                             await checkIfLocationEnabled().then((value) async {
                               if (value == true) {
-                                Fiberchat.toast(getTranslated(
-                                    this.context, 'detectingloc'));
+                                Fiberchat.toast(getTranslated(this.context, 'detectingloc'));
                                 await _determinePosition().then(
                                   (location) async {
                                     var locationstring =
@@ -4364,8 +3766,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                   },
                                 );
                               } else {
-                                Fiberchat.toast(getTranslated(
-                                    this.context, 'locationdenied'));
+                                Fiberchat.toast(getTranslated(this.context, 'locationdenied'));
                                 openAppSettings();
                               }
                             });
@@ -4464,6 +3865,7 @@ class _GroupChatPageState extends State<GroupChatPage>
   }
 
   bool isemojiShowing = false;
+
   refreshInput() {
     setStateIfMounted(() {
       if (isemojiShowing == false) {
@@ -4497,11 +3899,8 @@ class _GroupChatPageState extends State<GroupChatPage>
                               return Future.value(false);
                             }
                           : () async {
-                              WidgetsBinding.instance
-                                  .addPostFrameCallback((timeStamp) {
-                                var currentpeer = Provider.of<CurrentChatPeer>(
-                                    this.context,
-                                    listen: false);
+                              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                                var currentpeer = Provider.of<CurrentChatPeer>(this.context, listen: false);
                                 currentpeer.setpeer(newgroupChatId: '');
                               });
                               setLastSeen(false, false);
@@ -4512,9 +3911,8 @@ class _GroupChatPageState extends State<GroupChatPage>
                     children: [
                       Scaffold(
                           key: _scaffold,
-                          backgroundColor: Thm.isDarktheme(widget.prefs)
-                              ? storychatCHATBACKGROUNDDarkMode
-                              : storychatCHATBACKGROUNDLightMode,
+                          backgroundColor:
+                              Thm.isDarktheme(widget.prefs) ? storychatCHATBACKGROUNDDarkMode : storychatCHATBACKGROUNDLightMode,
                           appBar: AppBar(
                             elevation: 0.4,
                             titleSpacing: -10,
@@ -4525,17 +3923,15 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 icon: Icon(
                                   Icons.arrow_back_ios,
                                   size: 20,
-                                  color: pickTextColorBasedOnBgColorAdvanced(
-                                      Thm.isDarktheme(widget.prefs)
-                                          ? storychatAPPBARcolorDarkMode
-                                          : storychatAPPBARcolorLightMode),
+                                  color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                      ? storychatAPPBARcolorDarkMode
+                                      : storychatAPPBARcolorLightMode),
                                 ),
                                 onPressed: onWillPop,
                               ),
                             ),
-                            backgroundColor: Thm.isDarktheme(widget.prefs)
-                                ? storychatAPPBARcolorDarkMode
-                                : storychatAPPBARcolorLightMode,
+                            backgroundColor:
+                                Thm.isDarktheme(widget.prefs) ? storychatAPPBARcolorDarkMode : storychatAPPBARcolorLightMode,
                             title: InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -4551,41 +3947,30 @@ class _GroupChatPageState extends State<GroupChatPage>
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Padding(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(0, 7, 0, 7),
+                                      padding: const EdgeInsets.fromLTRB(0, 7, 0, 7),
                                       child: customCircleAvatarGroup(
                                           radius: 20,
                                           url: groupList
-                                              .lastWhere((element) =>
-                                                  element
-                                                      .docmap[Dbkeys.groupID] ==
-                                                  widget.groupID)
+                                              .lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID)
                                               .docmap[Dbkeys.groupPHOTOURL])),
                                   SizedBox(
                                     width: 7,
                                   ),
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
                                             groupList
-                                                .lastWhere((element) =>
-                                                    element.docmap[
-                                                        Dbkeys.groupID] ==
-                                                    widget.groupID)
+                                                .lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID)
                                                 .docmap[Dbkeys.groupNAME],
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                                color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                        .isDarktheme(
-                                                            widget.prefs)
+                                                color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                     ? storychatAPPBARcolorDarkMode
                                                     : storychatAPPBARcolorLightMode),
                                                 fontSize: 17.0,
@@ -4593,15 +3978,10 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           ),
                                           isCurrentUserMuted
                                               ? Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 5.0),
+                                                  padding: const EdgeInsets.only(left: 5.0),
                                                   child: Icon(
                                                     Icons.volume_off,
-                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                                .isDarktheme(
-                                                                    widget
-                                                                        .prefs)
+                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                             ? storychatAPPBARcolorDarkMode
                                                             : storychatAPPBARcolorLightMode)
                                                         .withOpacity(0.5),
@@ -4615,18 +3995,13 @@ class _GroupChatPageState extends State<GroupChatPage>
                                         height: 6,
                                       ),
                                       SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width /
-                                                1.7,
+                                        width: MediaQuery.of(context).size.width / 1.7,
                                         child: Text(
-                                          getTranslated(
-                                              context, 'tapherefrgrpinfo'),
+                                          getTranslated(context, 'tapherefrgrpinfo'),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                              color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                          .isDarktheme(
-                                                              widget.prefs)
+                                              color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                       ? storychatAPPBARcolorDarkMode
                                                       : storychatAPPBARcolorLightMode)
                                                   .withOpacity(0.9),
@@ -4648,10 +4023,9 @@ class _GroupChatPageState extends State<GroupChatPage>
                                       padding: const EdgeInsets.only(right: 0),
                                       child: Icon(
                                         Icons.more_vert_outlined,
-                                        color: pickTextColorBasedOnBgColorAdvanced(
-                                            Thm.isDarktheme(widget.prefs)
-                                                ? storychatAPPBARcolorDarkMode
-                                                : storychatAPPBARcolorLightMode),
+                                        color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
+                                            ? storychatAPPBARcolorDarkMode
+                                            : storychatAPPBARcolorLightMode),
                                       ),
                                     ),
                                     color: Thm.isDarktheme(widget.prefs)
@@ -4661,8 +4035,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                       switch (val) {
                                         case 'mute':
                                           setStateIfMounted(() {
-                                            isCurrentUserMuted =
-                                                !isCurrentUserMuted;
+                                            isCurrentUserMuted = !isCurrentUserMuted;
                                           });
 
                                           FirebaseMessaging.instance
@@ -4670,35 +4043,27 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                   "GROUP${widget.groupID.replaceAll(RegExp('-'), '').substring(1, widget.groupID.replaceAll(RegExp('-'), '').toString().length)}")
                                               .then((value) {
                                             FirebaseFirestore.instance
-                                                .collection(
-                                                    DbPaths.collectiongroups)
+                                                .collection(DbPaths.collectiongroups)
                                                 .doc(widget.groupID)
                                                 .update({
-                                              Dbkeys.groupMUTEDMEMBERS:
-                                                  FieldValue.arrayUnion(
-                                                      [widget.currentUserno]),
+                                              Dbkeys.groupMUTEDMEMBERS: FieldValue.arrayUnion([widget.currentUserno]),
                                             });
                                           }).catchError((err) {
                                             setStateIfMounted(() {
-                                              isCurrentUserMuted =
-                                                  !isCurrentUserMuted;
+                                              isCurrentUserMuted = !isCurrentUserMuted;
                                             });
                                             FirebaseFirestore.instance
-                                                .collection(
-                                                    DbPaths.collectiongroups)
+                                                .collection(DbPaths.collectiongroups)
                                                 .doc(widget.groupID)
                                                 .update({
-                                              Dbkeys.groupMUTEDMEMBERS:
-                                                  FieldValue.arrayRemove(
-                                                      [widget.currentUserno]),
+                                              Dbkeys.groupMUTEDMEMBERS: FieldValue.arrayRemove([widget.currentUserno]),
                                             });
                                           });
 
                                           break;
                                         case 'unmute':
                                           setStateIfMounted(() {
-                                            isCurrentUserMuted =
-                                                !isCurrentUserMuted;
+                                            isCurrentUserMuted = !isCurrentUserMuted;
                                           });
 
                                           FirebaseMessaging.instance
@@ -4706,70 +4071,45 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                   "GROUP${widget.groupID.replaceAll(RegExp('-'), '').substring(1, widget.groupID.replaceAll(RegExp('-'), '').toString().length)}")
                                               .then((value) {
                                             FirebaseFirestore.instance
-                                                .collection(
-                                                    DbPaths.collectiongroups)
+                                                .collection(DbPaths.collectiongroups)
                                                 .doc(widget.groupID)
                                                 .update({
-                                              Dbkeys.groupMUTEDMEMBERS:
-                                                  FieldValue.arrayRemove(
-                                                      [widget.currentUserno]),
+                                              Dbkeys.groupMUTEDMEMBERS: FieldValue.arrayRemove([widget.currentUserno]),
                                             });
                                           }).catchError((err) {
                                             setStateIfMounted(() {
-                                              isCurrentUserMuted =
-                                                  !isCurrentUserMuted;
+                                              isCurrentUserMuted = !isCurrentUserMuted;
                                             });
                                             FirebaseFirestore.instance
-                                                .collection(
-                                                    DbPaths.collectiongroups)
+                                                .collection(DbPaths.collectiongroups)
                                                 .doc(widget.groupID)
                                                 .update({
-                                              Dbkeys.groupMUTEDMEMBERS:
-                                                  FieldValue.arrayUnion(
-                                                      [widget.currentUserno]),
+                                              Dbkeys.groupMUTEDMEMBERS: FieldValue.arrayUnion([widget.currentUserno]),
                                             });
                                           });
 
                                           break;
                                         case 'report':
                                           showModalBottomSheet(
-                                              backgroundColor: Thm.isDarktheme(
-                                                      widget.prefs)
+                                              backgroundColor: Thm.isDarktheme(widget.prefs)
                                                   ? storychatDIALOGColorDarkMode
                                                   : storychatDIALOGColorLightMode,
                                               isScrollControlled: true,
                                               context: context,
                                               shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.vertical(
-                                                        top: Radius.circular(
-                                                            25.0)),
+                                                borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
                                               ),
                                               builder: (BuildContext context) {
                                                 // return your layout
-                                                var w = MediaQuery.of(context)
-                                                    .size
-                                                    .width;
+                                                var w = MediaQuery.of(context).size.width;
                                                 return Padding(
-                                                  padding: EdgeInsets.only(
-                                                      bottom:
-                                                          MediaQuery.of(context)
-                                                              .viewInsets
-                                                              .bottom),
+                                                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
                                                   child: Container(
-                                                      padding:
-                                                          EdgeInsets.all(16),
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height /
-                                                              2.6,
+                                                      padding: EdgeInsets.all(16),
+                                                      height: MediaQuery.of(context).size.height / 2.6,
                                                       child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .stretch,
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          crossAxisAlignment: CrossAxisAlignment.stretch,
                                                           children: [
                                                             SizedBox(
                                                               height: 12,
@@ -4778,71 +4118,39 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                               height: 3,
                                                             ),
                                                             Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 7),
+                                                              padding: const EdgeInsets.only(left: 7),
                                                               child: Text(
-                                                                getTranslated(
-                                                                    this.context,
-                                                                    'reportshort'),
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .left,
+                                                                getTranslated(this.context, 'reportshort'),
+                                                                textAlign: TextAlign.left,
                                                                 style: TextStyle(
-                                                                    color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget
-                                                                            .prefs)
-                                                                        ? storychatDIALOGColorDarkMode
-                                                                        : storychatDIALOGColorLightMode),
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        16.5),
+                                                                    color: pickTextColorBasedOnBgColorAdvanced(
+                                                                        Thm.isDarktheme(widget.prefs)
+                                                                            ? storychatDIALOGColorDarkMode
+                                                                            : storychatDIALOGColorLightMode),
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 16.5),
                                                               ),
                                                             ),
                                                             SizedBox(
                                                               height: 10,
                                                             ),
                                                             Container(
-                                                              margin: EdgeInsets
-                                                                  .only(
-                                                                      top: 10),
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .fromLTRB(
-                                                                          0,
-                                                                          0,
-                                                                          0,
-                                                                          0),
+                                                              margin: EdgeInsets.only(top: 10),
+                                                              padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                                                               // height: 63,
                                                               height: 63,
                                                               width: w / 1.24,
-                                                              child:
-                                                                  InpuTextBox(
-                                                                isDark: Thm
-                                                                    .isDarktheme(
-                                                                        widget
-                                                                            .prefs),
-                                                                controller:
-                                                                    reportEditingController,
-                                                                leftrightmargin:
-                                                                    0,
-                                                                showIconboundary:
-                                                                    false,
-                                                                boxcornerradius:
-                                                                    5.5,
+                                                              child: InpuTextBox(
+                                                                isDark: Thm.isDarktheme(widget.prefs),
+                                                                controller: reportEditingController,
+                                                                leftrightmargin: 0,
+                                                                showIconboundary: false,
+                                                                boxcornerradius: 5.5,
                                                                 boxheight: 50,
-                                                                hinttext: getTranslated(
-                                                                    this.context,
-                                                                    'reportdesc'),
-                                                                prefixIconbutton:
-                                                                    Icon(
+                                                                hinttext: getTranslated(this.context, 'reportdesc'),
+                                                                prefixIconbutton: Icon(
                                                                   Icons.message,
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .withOpacity(
-                                                                          0.5),
+                                                                  color: Colors.grey.withOpacity(0.5),
                                                                 ),
                                                               ),
                                                             ),
@@ -4850,93 +4158,53 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                               height: w / 10,
                                                             ),
                                                             myElevatedButton(
-                                                                color:
-                                                                    storychatPRIMARYcolor,
+                                                                color: storychatPRIMARYcolor,
                                                                 child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .fromLTRB(
-                                                                          10,
-                                                                          15,
-                                                                          10,
-                                                                          15),
+                                                                  padding: const EdgeInsets.fromLTRB(10, 15, 10, 15),
                                                                   child: Text(
-                                                                    getTranslated(
-                                                                        context,
-                                                                        'report'),
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontSize:
-                                                                            18),
+                                                                    getTranslated(context, 'report'),
+                                                                    style: TextStyle(color: Colors.white, fontSize: 18),
                                                                   ),
                                                                 ),
-                                                                onPressed:
-                                                                    () async {
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop();
+                                                                onPressed: () async {
+                                                                  Navigator.of(context).pop();
 
-                                                                  DateTime
-                                                                      time =
-                                                                      DateTime
-                                                                          .now();
+                                                                  DateTime time = DateTime.now();
 
-                                                                  Map<String,
-                                                                          dynamic>
-                                                                      mapdata =
-                                                                      {
-                                                                    'title':
-                                                                        'New report by User',
-                                                                    'desc':
-                                                                        '${reportEditingController.text}',
-                                                                    'phone':
-                                                                        '${widget.currentUserno}',
-                                                                    'type':
-                                                                        'Group Chat',
-                                                                    'time': time
-                                                                        .millisecondsSinceEpoch,
-                                                                    'id': widget
-                                                                        .groupID,
+                                                                  Map<String, dynamic> mapdata = {
+                                                                    'title': 'New report by User',
+                                                                    'desc': '${reportEditingController.text}',
+                                                                    'phone': '${widget.currentUserno}',
+                                                                    'type': 'Group Chat',
+                                                                    'time': time.millisecondsSinceEpoch,
+                                                                    'id': widget.groupID,
                                                                   };
 
-                                                                  await FirebaseFirestore
-                                                                      .instance
-                                                                      .collection(
-                                                                          'reports')
-                                                                      .doc(time
-                                                                          .millisecondsSinceEpoch
-                                                                          .toString())
-                                                                      .set(
-                                                                          mapdata)
-                                                                      .then(
-                                                                          (value) async {
+                                                                  await FirebaseFirestore.instance
+                                                                      .collection('reports')
+                                                                      .doc(time.millisecondsSinceEpoch.toString())
+                                                                      .set(mapdata)
+                                                                      .then((value) async {
                                                                     showModalBottomSheet(
                                                                         backgroundColor: Thm.isDarktheme(widget.prefs)
                                                                             ? storychatDIALOGColorDarkMode
                                                                             : storychatDIALOGColorLightMode,
-                                                                        isScrollControlled:
-                                                                            true,
-                                                                        context:
-                                                                            context,
-                                                                        shape:
-                                                                            RoundedRectangleBorder(
+                                                                        isScrollControlled: true,
+                                                                        context: context,
+                                                                        shape: RoundedRectangleBorder(
                                                                           borderRadius:
                                                                               BorderRadius.vertical(top: Radius.circular(25.0)),
                                                                         ),
-                                                                        builder:
-                                                                            (BuildContext
-                                                                                context) {
+                                                                        builder: (BuildContext context) {
                                                                           return Container(
-                                                                            height:
-                                                                                220,
-                                                                            child:
-                                                                                Padding(
+                                                                            height: 220,
+                                                                            child: Padding(
                                                                               padding: const EdgeInsets.all(28.0),
                                                                               child: Column(
                                                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                                                 children: [
-                                                                                  Icon(Icons.check, color: storychatGreenColor400, size: 40),
+                                                                                  Icon(Icons.check,
+                                                                                      color: storychatGreenColor400, size: 40),
                                                                                   SizedBox(
                                                                                     height: 30,
                                                                                   ),
@@ -4944,7 +4212,10 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                                                     getTranslated(context, 'reportsuccess'),
                                                                                     textAlign: TextAlign.center,
                                                                                     style: TextStyle(
-                                                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                                                      color: pickTextColorBasedOnBgColorAdvanced(
+                                                                                          Thm.isDarktheme(widget.prefs)
+                                                                                              ? storychatDIALOGColorDarkMode
+                                                                                              : storychatDIALOGColorLightMode),
                                                                                     ),
                                                                                   )
                                                                                 ],
@@ -4954,35 +4225,27 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                                         });
 
                                                                     //----
-                                                                  }).catchError(
-                                                                          (err) {
+                                                                  }).catchError((err) {
                                                                     showModalBottomSheet(
                                                                         backgroundColor: Thm.isDarktheme(widget.prefs)
                                                                             ? storychatDIALOGColorDarkMode
                                                                             : storychatDIALOGColorLightMode,
-                                                                        isScrollControlled:
-                                                                            true,
-                                                                        context:
-                                                                            this
-                                                                                .context,
-                                                                        shape:
-                                                                            RoundedRectangleBorder(
+                                                                        isScrollControlled: true,
+                                                                        context: this.context,
+                                                                        shape: RoundedRectangleBorder(
                                                                           borderRadius:
                                                                               BorderRadius.vertical(top: Radius.circular(25.0)),
                                                                         ),
-                                                                        builder:
-                                                                            (BuildContext
-                                                                                context) {
+                                                                        builder: (BuildContext context) {
                                                                           return Container(
-                                                                            height:
-                                                                                220,
-                                                                            child:
-                                                                                Padding(
+                                                                            height: 220,
+                                                                            child: Padding(
                                                                               padding: const EdgeInsets.all(28.0),
                                                                               child: Column(
                                                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                                                 children: [
-                                                                                  Icon(Icons.check, color: storychatGreenColor400, size: 40),
+                                                                                  Icon(Icons.check,
+                                                                                      color: storychatGreenColor400, size: 40),
                                                                                   SizedBox(
                                                                                     height: 30,
                                                                                   ),
@@ -4990,7 +4253,10 @@ class _GroupChatPageState extends State<GroupChatPage>
                                                                                     getTranslated(context, 'reportsuccess'),
                                                                                     textAlign: TextAlign.center,
                                                                                     style: TextStyle(
-                                                                                      color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs) ? storychatDIALOGColorDarkMode : storychatDIALOGColorLightMode),
+                                                                                      color: pickTextColorBasedOnBgColorAdvanced(
+                                                                                          Thm.isDarktheme(widget.prefs)
+                                                                                              ? storychatDIALOGColorDarkMode
+                                                                                              : storychatDIALOGColorLightMode),
                                                                                     ),
                                                                                   )
                                                                                 ],
@@ -5006,20 +4272,15 @@ class _GroupChatPageState extends State<GroupChatPage>
                                           break;
                                       }
                                     },
-                                    itemBuilder: ((context) =>
-                                        <PopupMenuItem<String>>[
+                                    itemBuilder: ((context) => <PopupMenuItem<String>>[
                                           PopupMenuItem<String>(
-                                            value: isCurrentUserMuted
-                                                ? 'unmute'
-                                                : 'mute',
+                                            value: isCurrentUserMuted ? 'unmute' : 'mute',
                                             child: Text(
                                               isCurrentUserMuted
                                                   ? '${getTranslated(this.context, 'unmute')}'
                                                   : '${getTranslated(this.context, 'mute')}',
                                               style: TextStyle(
-                                                color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                        .isDarktheme(
-                                                            widget.prefs)
+                                                color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                     ? storychatDIALOGColorDarkMode
                                                     : storychatDIALOGColorLightMode),
                                               ),
@@ -5030,9 +4291,7 @@ class _GroupChatPageState extends State<GroupChatPage>
                                             child: Text(
                                               '${getTranslated(this.context, 'report')}',
                                               style: TextStyle(
-                                                color: pickTextColorBasedOnBgColorAdvanced(Thm
-                                                        .isDarktheme(
-                                                            widget.prefs)
+                                                color: pickTextColorBasedOnBgColorAdvanced(Thm.isDarktheme(widget.prefs)
                                                     ? storychatDIALOGColorDarkMode
                                                     : storychatDIALOGColorLightMode),
                                               ),
@@ -5050,58 +4309,42 @@ class _GroupChatPageState extends State<GroupChatPage>
                                     ? storychatCHATBACKGROUNDDarkMode
                                     : storychatCHATBACKGROUNDLightMode,
                                 image: new DecorationImage(
-                                    image: AssetImage(Thm.isDarktheme(
-                                            widget.prefs)
+                                    image: AssetImage(Thm.isDarktheme(widget.prefs)
                                         ? "assets/images/background_dark.png"
                                         : "assets/images/background_light.png"),
                                     fit: BoxFit.cover),
                               ),
                             ),
                             PageView(children: <Widget>[
-                              Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Expanded(
-                                        child: buildMessagesUsingProvider(
-                                            context)),
-                                    groupList
-                                                    .lastWhere((element) =>
-                                                        element.docmap[
-                                                            Dbkeys.groupID] ==
-                                                        widget.groupID)
-                                                    .docmap[Dbkeys.groupTYPE] ==
-                                                Dbkeys
-                                                    .groupTYPEallusersmessageallowed ||
-                                            groupList
-                                                .lastWhere((element) =>
-                                                    element.docmap[
-                                                        Dbkeys.groupID] ==
-                                                    widget.groupID)
-                                                .docmap[Dbkeys.groupADMINLIST]
-                                                .contains(widget.currentUserno)
-                                        ? buildInputAndroid(
-                                            context,
-                                            isemojiShowing,
-                                            refreshInput,
-                                            _keyboardVisible,
-                                          )
-                                        : Container(
-                                            alignment: Alignment.center,
-                                            padding: EdgeInsets.fromLTRB(
-                                                14, 7, 14, 7),
-                                            color: Colors.white,
-                                            height: 70,
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            child: Text(
-                                              getTranslated(
-                                                  context, 'onlyadminsend'),
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(height: 1.3),
-                                            ),
-                                          ),
-                                  ])
+                              Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                                Expanded(child: buildMessagesUsingProvider(context)),
+                                groupList
+                                                .lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID)
+                                                .docmap[Dbkeys.groupTYPE] ==
+                                            Dbkeys.groupTYPEallusersmessageallowed ||
+                                        groupList
+                                            .lastWhere((element) => element.docmap[Dbkeys.groupID] == widget.groupID)
+                                            .docmap[Dbkeys.groupADMINLIST]
+                                            .contains(widget.currentUserno)
+                                    ? buildInputAndroid(
+                                        context,
+                                        isemojiShowing,
+                                        refreshInput,
+                                        _keyboardVisible,
+                                      )
+                                    : Container(
+                                        alignment: Alignment.center,
+                                        padding: EdgeInsets.fromLTRB(14, 7, 14, 7),
+                                        color: Colors.white,
+                                        height: 70,
+                                        width: MediaQuery.of(context).size.width,
+                                        child: Text(
+                                          getTranslated(context, 'onlyadminsend'),
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(height: 1.3),
+                                        ),
+                                      ),
+                              ])
                             ]),
                           ])),
                       buildLoadingThumbnail()
@@ -5129,12 +4372,10 @@ class _GroupChatPageState extends State<GroupChatPage>
   //     },
   //   );
   // }
-  Widget selectablelinkify(
-      String? text, int timestamp, double? fontsize, TextAlign? textalign) {
+  Widget selectablelinkify(String? text, int timestamp, double? fontsize, TextAlign? textalign) {
     bool isContainURL = false;
     try {
-      isContainURL =
-          Uri.tryParse(text!) == null ? false : Uri.tryParse(text)!.isAbsolute;
+      isContainURL = Uri.tryParse(text!) == null ? false : Uri.tryParse(text)!.isAbsolute;
     } on Exception catch (_) {
       isContainURL = false;
     }
@@ -5144,38 +4385,29 @@ class _GroupChatPageState extends State<GroupChatPage>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SelectableLinkify(
-                style: TextStyle(
-                    fontSize: isAllEmoji(text!) ? fontsize! * 2 : fontsize,
-                    color: Colors.black87),
+                style: TextStyle(fontSize: isAllEmoji(text!) ? fontsize! * 2 : fontsize, color: Colors.black87),
                 text: text,
                 onOpen: (link) async {
                   custom_url_launcher(link.url);
                 },
               ),
-              listMapLang.indexWhere(
-                          (element) => element.containsKey('$timestamp-trns')) <
-                      0
+              listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns')) < 0
                   ?
                   //---prfs
                   widget.prefs.getString('$timestamp-trns') == null ||
-                          widget.prefs.getString('$timestamp-trns') ==
-                              text.trim().toLowerCase()
+                          widget.prefs.getString('$timestamp-trns') == text.trim().toLowerCase()
                       ? SizedBox()
                       : Padding(
                           padding: EdgeInsets.all(7),
                           child: Text(
                             widget.prefs.getString('$timestamp-trns') ?? "",
-                            style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: storychatGrey),
+                            style: TextStyle(fontStyle: FontStyle.italic, color: storychatGrey),
                           ),
                         )
 //-pprefs
                   :
                   //---map
-                  listMapLang[listMapLang.indexWhere((element) =>
-                                      element.containsKey('$timestamp-trns'))]
-                                  ['$timestamp-trns']
+                  listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]['$timestamp-trns']
                               .toString()
                               .toLowerCase() ==
                           text.trim().toLowerCase()
@@ -5183,12 +4415,9 @@ class _GroupChatPageState extends State<GroupChatPage>
                       : Padding(
                           padding: EdgeInsets.all(7),
                           child: Text(
-                            listMapLang[listMapLang.indexWhere((element) =>
-                                    element.containsKey('$timestamp-trns'))]
+                            listMapLang[listMapLang.indexWhere((element) => element.containsKey('$timestamp-trns'))]
                                 ['$timestamp-trns'],
-                            style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: storychatGrey),
+                            style: TextStyle(fontStyle: FontStyle.italic, color: storychatGrey),
                           ),
                         )
             ],
@@ -5198,8 +4427,7 @@ class _GroupChatPageState extends State<GroupChatPage>
             graphicFit: BoxFit.contain,
             borderRadius: 5,
             showDomain: true,
-            titleStyle: TextStyle(
-                fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
+            titleStyle: TextStyle(fontSize: 13, height: 1.4, fontWeight: FontWeight.bold),
             showBody: true,
             bodyStyle: TextStyle(fontSize: 11.6, color: Colors.black45),
             placeholderWidget: SelectableLinkify(

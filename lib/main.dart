@@ -11,10 +11,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:google_translate/google_translate.dart';
+import 'package:localstorage/localstorage.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '/Configs/Dbkeys.dart';
 import '/Configs/app_constants.dart';
 import '/Screens/homepage/homepage.dart';
@@ -73,6 +75,7 @@ void main() async {
   if (Platform.isAndroid) {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
+  await initLocalStorage();
   GoogleTranslate.initialize(
     apiKey: GoogleTransalteAPIkey,
     sourceLanguage: "",
@@ -225,10 +228,12 @@ class _FiberchatWrapperState extends State<FiberchatWrapper> {
                     ],
                     child: StreamProvider<List<BroadcastModel>>(
                       initialData: [],
-                      create: (BuildContext context) => firebaseBroadcastServices.getBroadcastsList(snapshot.data!.getString(Dbkeys.phone) ?? ''),
+                      create: (BuildContext context) =>
+                          firebaseBroadcastServices.getBroadcastsList(snapshot.data!.getString(Dbkeys.phone) ?? ''),
                       child: StreamProvider<List<GroupModel>>(
                         initialData: [],
-                        create: (BuildContext context) => firebaseGroupServices.getGroupsList(snapshot.data!.getString(Dbkeys.phone) ?? ''),
+                        create: (BuildContext context) =>
+                            firebaseGroupServices.getGroupsList(snapshot.data!.getString(Dbkeys.phone) ?? ''),
                         child: Consumer<DarkThemeProvider>(
                           builder: (BuildContext context, value, child) {
                             return OKToast(
@@ -265,7 +270,8 @@ class _FiberchatWrapperState extends State<FiberchatWrapper> {
                                 ],
                                 localeResolutionCallback: (locale, supportedLocales) {
                                   for (var supportedLocale in supportedLocales) {
-                                    if (supportedLocale.languageCode == locale!.languageCode && supportedLocale.countryCode == locale.countryCode) {
+                                    if (supportedLocale.languageCode == locale!.languageCode &&
+                                        supportedLocale.countryCode == locale.countryCode) {
                                       return supportedLocale;
                                     }
                                   }
